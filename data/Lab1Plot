@@ -8,12 +8,12 @@ Year2, Pressure = np.genfromtxt('ac_p.csv', delimiter=',', skip_header = 1).T
 Year3, Extraction = np.genfromtxt('ac_q.csv', delimiter=',', skip_header = 1).T
 
 # Create and configure plot
-f,host = plt.subplots(figsize=(8,5))
+f,host = plt.subplots(figsize=(16,8))
 ax1 = host.twinx()
 ax2 = host.twinx()
 host.set_xlabel('Time [year]')
 ax2.spines['right'].set_position(('outward', 70))
-host.set_title('Pressure, Dissolved Copper and Extraction at Onehunga Aquifier Over Time')
+host.set_title('Pressure, Dissolved Copper and Extraction at Onehunga Aquifer Over Time', fontsize=18)
 host.set_ylabel('Dissolved Cu [mg/L]')
 ax1.set_ylabel('Pressure [MPa]')
 ax2.set_ylabel('Extraction Rate [10^6 L/day]')
@@ -25,5 +25,5 @@ p3, = ax2.plot(Year3, Extraction, 'g-', label='Extraction')
 host.legend(handles=[p1,p2,p3], loc='best')
 
 # Show/save plot
-plt.show()
-#plt.savefig("Lab1Plot.png")
+# plt.show()
+plt.savefig('Lab1Plot.png')
