@@ -11,12 +11,12 @@ Year3, Extraction = np.genfromtxt('ac_q.csv', delimiter=',', skip_header = 1).T
 f,host = plt.subplots(figsize=(16,8))
 ax1 = host.twinx()
 ax2 = host.twinx()
-host.set_xlabel('Time [year]')
+host.set_xlabel('Time [year]',fontsize=12)
 ax2.spines['right'].set_position(('outward', 70))
 host.set_title('Pressure, Dissolved Copper and Extraction at Onehunga Aquifer Over Time', fontsize=18)
-host.set_ylabel('Dissolved Cu [mg/L]')
-ax1.set_ylabel('Pressure [MPa]')
-ax2.set_ylabel('Extraction Rate [10^6 L/day]')
+host.set_ylabel('Dissolved Cu [mg/L]', fontsize=12)
+ax1.set_ylabel('Pressure [MPa]',fontsize=12)
+ax2.set_ylabel('Extraction Rate [10^6 L/day]',fontsize=12)
 
 # Plot data
 p1, = host.plot(Year1, Cu, 'b-', label='Copper')
