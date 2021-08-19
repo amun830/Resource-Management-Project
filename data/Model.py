@@ -4,99 +4,96 @@ from matplotlib import pyplot as plt
 
 
 def ode_pressure(t, P, q, a, b, p0, p1):
-    ''' Return the derivative dx/dt at time, t, for given parameters.
+    ''' 
+        Return the derivative dP/dt at time, t, for given parameters.
 
         Parameters:
         -----------
         t : float
-            Independent variable.
+            Independent variable (time, in years)
         P : float
-            Dependent variable.
+            Dependent variable (pressure, in Pa)
         q : float
-            Source/sink rate.
+            Mass flow rate of extraction rate (in kg/year)
         a : float
-            Source/sink strength parameter.
+            Source/sink strength parameter for extraction
         b : float
-            Recharge strength parameter.
+            Recharge strength parameter for pressure recharge
         p0 : float
-            Ambient value of dependent variable.
+             Ambient pressure at low pressure boundary (in Pa)
+        p1 : float
+             Ambient pressure at high pressure boundary (in Pa)
 
         Returns:
         --------
-        dxdt : float
-            Derivative of dependent variable with respect to independent variable.
-
-        Notes:
-        ------
-        None
-
-        Examples:
-        ---------
-        >>> ode_model(0, 1, 2, 3, 4, 5)
-        22
+        dPdt : float
+               Derivative of aquifer pressure with respect to time
 
     '''
 
-    dxdt = - a * q - b * (P - p0) - b * (P - p1)
+    # Evaluate derivative numerically at (t,P)
+    dPdt = - a * q - b * (P - p0) - b * (P - p1)
 
-
-    return dxdt
+    # Return derivative
+    return dPdt
 
 def ode_cu(t, P, C, Csrc, d, a, b, p0, p1):
-    ''' Return the derivative dx/dt at time, t, for given parameters.
+    ''' 
+        Return the derivative dC/dt at time, t, for given parameters.
 
         Parameters:
         -----------
-        t : float
-            Independent variable.
-        P : float
-            Dependent variable.
-        q : float
-            Source/sink rate.
-        a : float
-            Source/sink strength parameter.
-        b : float
-            Recharge strength parameter.
-        p0 : float
-            Ambient value of dependent variable.
-
+        t :     float
+                Independent variable (time, in years)
+        P :     float
+                Dependent variable (pressure, in Pa)
+        C :     float
+                Dependent variable (copper concentration, as mass fraction - unitless)
+        Csrc :  float
+                Copper concentration at surface source, as mass fraction (unitless)
+        d :     float
+                Source/sink strength parameter for surface leaching
+        a :     float
+                Source/sink strength parameter for extraction
+        b :     float
+                Recharge strength parameter for pressure recharge
+        p0 :    float
+                Ambient pressure at low pressure boundary (in Pa)
+        p1 :    float
+                Ambient pressure at high pressure boundary (in Pa)
         Returns:
         --------
-        dxdt : float
-            Derivative of dependent variable with respect to independent variable.
-
-        Notes:
-        ------
-        None
-
-        Examples:
-        ---------
-        >>> ode_model(0, 1, 2, 3, 4, 5)
-        22
+        dCdt :  float
+                Derivative of aquifer copper concentration with respect to time
 
     '''
+
+    # Evaluate copper concentration at low pressure boundary, which depends on flow direction
+    # Concentration same as C(t) if flow is out, otherwise take concentration as zero. 
     Cdash = (P > p0)*C
 
-    dcdt = -(b/a) * (P - p0) * (Cdash - C) + (b/a) * (P - p0) * C - d * (P - (p0 -p1)/2)*Csrc
+    # Evaluate derivative numerically at (t, P, C)
+    dCdt = -(b/a) * (P - p0) * (Cdash - C) + (b/a) * (P - p1) * C - d * (P - 0.5 * (p0 + p1))*Csrc
 
+    # Return derivative
+    return dCdt
 
-    return dcdt
-
-def solve_ode_pressure(f, t0, t1, dt, p0, p1, pars):
-    ''' Solve an ODE numerically.
+def solve_ode_pressure(f, t0, t1, dt, t_data, q_data, p0, p1, pars):
+    ''' 
+        Solves the pressure ODE numerically.
 
         Parameters:
         -----------
         f : callable
-            Function that returns dxdt given variable and parameter inputs.
+            Function that returns dP/dt given variable and parameter inputs.
         t0 : float
-            Initial time of solution.
+            Initial time of solution (year)
         t1 : float
-            Final time of solution.
+            Final time of solution (year)
         dt : float
-            Time step length.
-        x0 : float
-            Initial value of solution.
+            Time step length (in years)
+        p_init : float
+            Initial pressure of the aquifer (in Pa)
         pars : array-like
             List of parameters passed to ODE function f.
 
@@ -121,19 +118,16 @@ def solve_ode_pressure(f, t0, t1, dt, p0, p1, pars):
             4. all other parameters
     '''
 
-    data = np.genfromtxt("ac_q.csv", dtype=float, skip_header=1, delimiter=', ')
-    tv = data[:,0]
-    qv = data[:,1] * 10**6 * 0.365 #m^3/year
-
-
+    # Calculate number of points to solve numerically
     npoints = int((t1 - t0) / dt + 1)
 
+    # Initialise time and pressure solution vectors
     t = np.linspace(t0, t1, npoints)
     P = np.zeros(npoints)
+    P[0] = pars[2]
 
-    q = np.interp(t, tv, qv)
-
-    P[0] = p0
+    # Interpolate extraction rate at discrete solution points
+    q = np.interp(t, t_data, q_data)
 
     for i in range (0, npoints - 1):
         edxdt = f(t[i], P[i], q[i], pars[0], pars[1], p0, p1) 
@@ -209,7 +203,7 @@ def solve_ode_cu(f, t0, t1, dt, Csrc, c0, d, p0, p1, pars):
 
     return t, C
 
-def plot_aquifer_pressure(t0, t1, dt, p0, p1, a, b):
+def plot_aquifer_pressure(t0, t1, dt, t_data, q_data, p0, p1, a, b, p_init):
     ''' Plot the kettle LPM over top of the data.
 
         Parameters:
@@ -230,7 +224,7 @@ def plot_aquifer_pressure(t0, t1, dt, p0, p1, a, b):
 
     '''
 
-    timean, pressan = solve_ode_pressure(ode_pressure, t0, t1, dt, p0, p1, [a, b])
+    timean, pressan = solve_ode_pressure(ode_pressure, t0, t1, dt, t_data, q_data, p0, p1, [a, b, p_init])
     data = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ')
     time = data[:,0]
     press = data[:,1]*10**6     #Pa
@@ -291,19 +285,56 @@ def plot_aquifer_cu(t0, t1, dt, Csrc, c0, d, p0, p1, a, b):
     plt.show()
 
 if __name__ == "__main__":
+    
+    # The following code generates all the relevant plots and figures
 
-    a = 1/(997*4184*0.0005) #Calibrate
-    b = 1.5/(997*4184*0.0005) #Calibrate
+    ########## Generate benchmark plots for both the pressure and copper numerical solvers ##########
+    # 1. Benchmarking for solve_ode_pressure
+    if True:
+    #   We will use the simplified condition that the extraction is constant, q(t) = q0
+    #   The analytical solution to dP/dt = -aq0 -b(P-p0) - b(P-p1) is, using the integrating factor method, 
+    #   P(t) = (-aq0/2b + (p0 + p1)/2) + e^-2bt (P_init + aq0/2b - (p0 + p1)/2)
+    #   Computing the analytical and numerical solutions over the time domain [0, 100] using q0 = 1000, p0 = 10^5, p1 = 1.2 x 10^5, 
+    #   a = 1, b = 2, and P_init = 7 x 10^4 (and dt = 0.5)
+        t0 = 0; t1 = 100; q0 = 1000; p0 = 10**5; p1 = 1.2*10**5; a = 1; b = 2; p_init = 7*10**4; dt = 0.5; pars = [a,b, p_init]
+        npoints = int((t1 - t0) / dt + 1)
+        times = np.linspace(t0, t1, npoints)
+        P_analytical = (-a*q0/2*b + (p0 + p1)/2) + (np.e**(-2*b*times))*(p_init + a*q0/2*b - (p0 + p1)/2)
+        # Initialise created data for numerical case:
+        t_data = [t0, t1]; q_data = [q0, q0]
+        _, P_numerical = solve_ode_pressure(ode_pressure, t0, t1, dt, t_data, q_data, p0, p1, pars)
+        # Plot the solutions 
+        f,host = plt.subplots(1,2)
+        num, = host[0].plot(times, P_numerical, 'b-x')
+        ana, = host[0].plot(times, P_analytical, 'r-')
+        host[0].set_title('Benchmark Plot for Pressure ODE Solver')
+        host[0].set_xlabel('Time, t (year')
+        host[0].set_ylabel('Pressure, P (Pa')
+        host[0].legend([num, ana],['Numerical Solution', 'Analytical Solution'])
+        plt.show()
+
+
+
+
+
+
+    data = np.genfromtxt("ac_q.csv", dtype=float, skip_header=1, delimiter=', ')
+    q_data = data[:,1] * 10**6 * 0.365 #m^3/year
+    t_data = data[:,0]
+
+    a = 1/(997*4184*0.0005)         #Calibrate
+    b = 1.5/(997*4184*0.0005)       #Calibrate
     t0 = 1980                       #Year start
     t1 = 2016                       #Year end
     dt = 1                          
-    p0 = 3.6725020e-02 * 10**6      #Calibrate, pressure at low pressure boundary (Pa)
-    p1 = 3.6725020e-02 * 10**6      #Calibrate, pressure at high pressure boundary (Pa)
-    Csrc = 1000                     #Calibrate, NOT SURE (g/m^3)
-    c0 = 1000                       #Calibrate, NOT SURE (g/m^3)????
-    d = 1000                        #Calibrate, NOT SURE ??????
+    p0 = 1 * 10**5      #Calibrate, pressure at low pressure boundary (Pa)
+    p1 = 1.2 * 10**5      #Calibrate, pressure at high pressure boundary (Pa)
+    p_init = 0.7 * 10**5
+    Csrc = 0.0001                     #Calibrate, NOT SURE (g/m^3)
+    c0 = 0.0001                       #Calibrate, NOT SURE (g/m^3)????
+    d = 20                        #Calibrate, NOT SURE ??????
 
-    plot_aquifer_pressure(t0, t1, dt, p0, p1, a, b)
+    plot_aquifer_pressure(t0, t1, dt, t_data, q_data, p0, p1, a, b, p_init)
     plot_aquifer_cu(t0, t1, dt, Csrc, c0, d, p0, p1, a, b)
 
     
