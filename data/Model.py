@@ -289,31 +289,34 @@ if __name__ == "__main__":
     # The following code generates all the relevant plots and figures
 
     ########## Generate benchmark plots for both the pressure and copper numerical solvers ##########
-    # 1. Benchmarking for solve_ode_pressure
     if True:
-    #   We will use the simplified condition that the extraction is constant, q(t) = q0
-    #   The analytical solution to dP/dt = -aq0 -b(P-p0) - b(P-p1) is, using the integrating factor method, 
-    #   P(t) = (-aq0/2b + (p0 + p1)/2) + e^-2bt (P_init + aq0/2b - (p0 + p1)/2)
-    #   Computing the analytical and numerical solutions over the time domain [0, 100] using q0 = 1000, p0 = 10^5, p1 = 1.2 x 10^5, 
-    #   a = 1, b = 2, and P_init = 7 x 10^4 (and dt = 0.5)
-        t0 = 0; t1 = 100; q0 = 1000; p0 = 10**5; p1 = 1.2*10**5; a = 1; b = 2; p_init = 7*10**4; dt = 0.5; pars = [a,b, p_init]
+        # *** 1. Benchmarking for solve_ode_pressure ***
+        # We will use the simplified condition that the extraction is constant, q(t) = q0
+        # The analytical solution to dP/dt = -aq0 -b(P-p0) - b(P-p1) is, using the integrating factor method, 
+        # P(t) = (-aq0/2b + (p0 + p1)/2) + e^-2bt (P_init + aq0/2b - (p0 + p1)/2)
+        # Computing the analytical and numerical solutions over the time domain [0, 100] using q0 = 1000, p0 = 10^5, p1 = 1.2 x 10^5, 
+        # a = 1, b = 2, and P_init = 7 x 10^4 (and dt = 0.5)
+        t0 = 0; t1 = 4000; q0 = 20000; p0 = 1*10**5; p1 = 1.2*10**5; a = 0.001; b = 6*10**-4; p_init = 9*10**4; dt = 50; pars = [a,b, p_init]
         npoints = int((t1 - t0) / dt + 1)
         times = np.linspace(t0, t1, npoints)
-        P_analytical = (-a*q0/2*b + (p0 + p1)/2) + (np.e**(-2*b*times))*(p_init + a*q0/2*b - (p0 + p1)/2)
+        P_analytical = (-a*q0/(2*b) + (p0 + p1)/2) + (np.e**(-2*b*times))*(p_init + a*q0/(2*b) - (p0 + p1)/2)
         # Initialise created data for numerical case:
         t_data = [t0, t1]; q_data = [q0, q0]
         _, P_numerical = solve_ode_pressure(ode_pressure, t0, t1, dt, t_data, q_data, p0, p1, pars)
         # Plot the solutions 
         f,host = plt.subplots(1,2)
-        num, = host[0].plot(times, P_numerical, 'b-x')
+        num, = host[0].plot(times, P_numerical, 'bx')
         ana, = host[0].plot(times, P_analytical, 'r-')
-        host[0].set_title('Benchmark Plot for Pressure ODE Solver')
-        host[0].set_xlabel('Time, t (year')
-        host[0].set_ylabel('Pressure, P (Pa')
+        #host[0].set_ylim([23000, 32000])
+        host[0].set_title('Benchmark Plot for Pressure ODE Solver [Simple Parameters]')
+        host[0].set_xlabel('Time, t (year)')
+        host[0].set_ylabel('Pressure, P (Pa)')
         host[0].legend([num, ana],['Numerical Solution', 'Analytical Solution'])
+        
+        # 2. *** Benchmarking for solve_ode_cu ***
+
+        # Show plot
         plt.show()
-
-
 
 
 
