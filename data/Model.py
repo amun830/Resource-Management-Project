@@ -1,8 +1,11 @@
 # Import libraries
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.optimize import curve_fit
+#################################################################################################
 
 
+### Pressure and copper derivative functions ###
 def ode_pressure(t, P, q, a, b, p0, p1):
     ''' 
         Return the derivative dP/dt at time, t, for given parameters.
@@ -82,6 +85,8 @@ def ode_cu(t, P, C, a, b, d, p0, p1, C_src, M0):
     # Return derivative
     return dCdt
 
+
+### Numerical solution functions for pressure and copper ###
 def solve_ode_pressure(f, t0, t1, dt, t_data, q_data, P_parameters):
     ''' 
         Solves the pressure ODE numerically.
@@ -214,6 +219,8 @@ def solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters):
     # Return time and copper concentration solution vectors
     return t, C
 
+
+### Plotting functions for pressyre and copper ###
 def plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_parameters):
     ''' Plot the kettle LPM over top of the data.
 
@@ -291,6 +298,206 @@ def plot_aquifer_cu(t0, t1, dt, t_sol, P_sol, t_cu_data, cu_data, C_parameters):
     # Return model solutions of time and copper concentration
     return m_time, m_cu
 
+
+#################################################################################################
+
+
+### Gradient descent functions ###
+
+def objective(theta):
+    '''
+    COMPLETE DOCSTRING
+    theta = parameters = [a,b,p0,p1,p_init,c_init,C_src,d,M0,rho_sol]
+    Returns S(theta)
+    Note: pressure and copper observations are hard coded in
+    '''
+
+    # Unpack parameters from input theta
+    [a, b, p0, p1, p_init, c_init, C_src, d, M0, rho_sol] = theta
+    theta = [a,b, c_init,C_src]
+    P_parameters = [a, b, p0, p1, p_init]
+    C_parameters = [a, b, d, p0, p1, c_init, C_src, M0]
+
+    # Read in extraction, pressure and copper concentration data
+    data1 = np.genfromtxt("ac_q.csv", dtype=float, skip_header=1, delimiter=', ')
+    t_q_data = data1[:,0]    
+    q_data = data1[:,1] * 10**6 * 365                         # Extraction
+    data2 = np.genfromtxt("ac_cu.csv", dtype=float, skip_header=1, delimiter=', ')
+    t_cu_data = data2[:,0]
+    cu_data = np.array(data2[:,1]) * 10**-3 / rho_sol         # Copper conc
+    data3 = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ')
+    t_p_data = data3[:,0]
+    p_data = np.array(data3[:,1]) * 10**6                     # Pressure
+
+    # Initialise time conditons to use the model for
+    t0 = 1980; t1 = 2016; dt = 0.5
+
+    # Evaluate model estimates at pressure points
+    t_sol1, p1 = solve_ode_pressure(ode_pressure, t0, t1, dt, t_q_data, q_data, P_parameters)
+    p_sol = np.interp(t_p_data, t_sol1, p1)
+    p_sol = np.array(p_sol)
+
+    # Evaluate model estimates at copper concentration points
+    t_sol2, cu2 = solve_ode_cu(ode_cu, t0, t1, dt, t_sol1, p1, C_parameters)
+    Cu_sol = np.interp(t_cu_data, t_sol2, cu2)
+    Cu_sol = np.array(Cu_sol)
+
+    # Evaluate the pressure misfit
+    p_misfit = sum(((p_data - p_sol)/10**6)**2)
+
+    # Evaluate the copper concentration misfit
+    cu_misfit = sum(((cu_data - Cu_sol)*10**6)**2)
+
+    # Evaluate a weighted sum
+    S = p_misfit + cu_misfit
+
+    return S
+
+def objective_dir(objective, theta):
+    """ 
+        Compute a unit vector of objective function sensitivities, dS/dtheta.
+
+        Parameters
+        ----------
+        obj: callable
+            Objective function.
+        theta: array-like
+            Parameter vector at which dS/dtheta is evaluated.
+        
+        Returns
+        -------
+        s : array-like
+            Unit vector of objective function derivatives.
+
+    """
+    # Empty list to store components of objective function derivative 
+    s = np.zeros(len(theta))
+    
+    # Compute objective function at theta
+    s0 = objective(theta)
+
+    # Amount by which to increment parameter
+    dtheta = 10**-3
+    
+    # For each parameter
+    for i in range(len(theta)):
+        # Basis vector in parameter direction 
+        eps_i = np.zeros(len(theta))
+        eps_i[i] = 1.
+        
+        # Compute objective function at incremented parameter
+        si = objective(theta + dtheta * eps_i)
+
+        # Compute objective function sensitivity
+        s[i] = (si - s0)/dtheta
+
+    # Normalise sensitivity vector
+    s = s/np.linalg.norm(s)
+
+    # Return sensitivity vector
+    return s
+
+def step(theta0, s, alpha):
+    """ 
+        Compute parameter update by taking step in steepest descent direction.
+
+        Parameters
+        ----------
+        theta0 : array-like
+            Current parameter vector.
+        s : array-like
+            Step direction.
+        alpha : float
+            Step size.
+        
+        Returns
+        -------
+        theta1 : array-like
+            Updated parameter vector.
+    """
+    # Compute new parameter vector as sum of old vector and steepest descent step
+    theta1 = theta0 - alpha * s
+    
+    return theta1
+
+def line_search(objective, theta, s):
+    """ Compute step length that minimizes objective function along the search direction.
+
+        Parameters
+        ----------
+        obj : callable
+            Objective function.
+        theta : array-like
+            Parameter vector at start of line search.
+        s : array-like
+            Search direction (objective function sensitivity vector).
+    
+        Returns
+        -------
+        alpha : float
+            Step length.
+    """
+    # initial step size
+    alpha = 0.
+    # objective function at start of line search
+    s0 = objective(theta)
+    # anonymous function: evaluate objective function along line, parameter is a
+    sa = lambda a: objective(theta-a*s)
+    # compute initial Jacobian: is objective function increasing along search direction?
+    j = (sa(.01)-s0)/0.01
+    # iteration control
+    N_max = 500
+    N_it = 0
+    # begin search
+        # exit when (i) Jacobian very small (optimium step size found), or (ii) max iterations exceeded
+    while abs(j) > 1.e-5 and N_it<N_max:
+        # increment step size by Jacobian
+        alpha += -j
+        # compute new objective function
+        si = sa(alpha)
+        # compute new Jacobian
+        j = (sa(alpha+0.01)-si)/0.01
+        # increment
+        N_it += 1
+    # return step size
+    return alpha
+
+def gradient_descent(theta0):
+    
+    theta_all = [theta0]
+    s0 = objective_dir(objective, theta0)
+    s_all = [s0]
+
+    # iteration control
+    N_max = 500
+    N_it = 0
+
+    # begin steepest descent iterations
+        # exit when max iterations exceeded
+    while N_it < N_max:
+        # uncomment line below to implement line search (TASK FIVE)
+        alpha = line_search(objective, theta_all[-1], s_all[-1])
+        
+        # Update parameter vector 
+        theta_next = step(theta0, s0, alpha)
+        theta_all.append(theta_next) 	# save parameter value for plotting
+        
+        # Compute new direction for line search
+        s_next = objective_dir(objective, theta_all[-1])
+        s_all.append(s_next) 			# save search direction for plotting
+        
+        # Compute magnitude of steepest descent direction for exit criteria
+        N_it += 1
+        # Restart next iteration with values at end of previous iteration
+        theta0 = 1.*theta_next
+        s0 = 1.*s_next
+
+    return theta0
+
+
+#################################################################################################
+
+
 if __name__ == "__main__":
     
     # The following code generates all the relevant plots and figures
@@ -347,9 +554,9 @@ if __name__ == "__main__":
         plt.show()
 
 
-    ########## Generate best fit model plot, overlaying the pressure and copper models with the historical data ##########
+    ########## Generate ROUGH/EYE-FIT model plots, overlaying the pressure and copper models with the historical data ##########
     # Not all SI units:
-    if True:   
+    if False:   
         
         # Initialise model parameters 
         a = 1/(997*4184*0.0005) * 1.27          #Calibrate
@@ -358,8 +565,8 @@ if __name__ == "__main__":
         p1 = 5 * 10**4                          #Calibrate, pressure at high pressure boundary (Pa)
         p_init = 3.5*10**4
         
-        C_src = 0.015                           #Calibrate, NOT SURE (g/m^3)
-        c_init = 0.01                           #Calibrate, NOT SURE (g/m^3)????
+        c_init = 0.01
+        C_src = 0.015                           #Calibrate, NOT SURE (g/m^3)                           #Calibrate, NOT SURE (g/m^3)????
         d = 7500                                #Calibrate, NOT SURE ??????
         M0 = 8*10**7
         rho_w = 1000 
@@ -390,9 +597,9 @@ if __name__ == "__main__":
         # fig, ax = plt.subplots(1,2)
         t_sol, P_sol = plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_parameters)
         plot_aquifer_cu(t0, t1, dt, t_sol, P_sol, t_cu_data, cu_data, C_parameters)
-
     # SI units for copper concentration and extraction rate:
-    if True:   
+    if False:   
+
         # Initialise model parameters 
         a = 1 * 10**-6                        #Calibrate
         b = 6 * 10**-2          #Calibrate
@@ -400,8 +607,8 @@ if __name__ == "__main__":
         p1 = 7 * 10**4                          #Calibrate, pressure at high pressure boundary (Pa)
         p_init = 3.5*10**4
 
-        C_src = 8*10**-6                           #Calibrate
-        c_init = 0                           
+        c_init = 0 
+        C_src = 8*10**-6                           #Calibrate                          
         d = 12500                                #Calibrate
         M0 = 1*10**11
         rho_sol = 1000 
@@ -433,3 +640,179 @@ if __name__ == "__main__":
         # fig, ax = plt.subplots(1,2)
         t_sol, P_sol = plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_parameters)
         plot_aquifer_cu(t0, t1, dt, t_sol, P_sol, t_cu_data, cu_data, C_parameters)
+
+
+    ########## Generate best fit model plots, using gradient descent ##########
+    if False:
+
+        # We will minimise the combined misfit of the pressure and copper models. In order to weight them approximately evenly,
+        # it is necessary to scale the copper misfit up (since the copper cooncentration scale is many magnitudes less than the pressure scale)
+
+        # Initialise model parameter estimates
+        a = 1 * 10**-6                        
+        b = 6 * 10**-2         
+        p0 = 1000                              
+        p1 = 7 * 10**4                          
+        p_init = 3.5*10**4
+        c_init = 0 
+        C_src = 8*10**-6                                                    
+        d = 12500
+        M0 = 1*10**11
+        rho_sol = 1000 
+       
+        # Read in extraction, pressure and copper concentration data
+        data1 = np.genfromtxt("ac_q.csv", dtype=float, skip_header=1, delimiter=', ')
+        t_q_data = data1[:,0]    
+        q_data = data1[:,1] * 10**6 * 365                         # Extraction
+        data2 = np.genfromtxt("ac_cu.csv", dtype=float, skip_header=1, delimiter=', ')
+        t_cu_data = data2[:,0]
+        cu_data = np.array(data2[:,1]) * 10**-3 / rho_sol         # Copper conc
+        data3 = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ')
+        t_p_data = data3[:,0]
+        p_data = np.array(data3[:,1]) * 10**6                     # Pressure
+
+        # Initialise initial parameter list estimate
+        theta0 = [a,b,p0,p1,p_init,c_init,C_src,d,M0,rho_sol]
+        P_parameters = [a, b, p0, p1, p_init]
+        C_parameters = [a, b, d, p0, p1, c_init, C_src, M0]
+
+        # Compute optimal theta
+        theta_opt = gradient_descent(theta0)
+        [a,b,p0,p1,p_init,c_init,C_src,d,M0,rho_sol] = theta_opt
+        P_parameters = [a, b, p0, p1, p_init]
+        C_parameters = [a, b, d, p0, p1, c_init, C_src, M0]
+
+
+        # Plot optimal model
+        t0 = 1980; t1 = 2016; dt = 0.5
+
+        plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_parameters)
+        print(*theta_opt)
+
+
+    ########## Generate best fit model plots, using curve fitting ##########
+    if True:
+
+        # Estimate paramater values
+        a = 1 * 10**-6                        
+        b = 6 * 10**-2         
+        p0 = 1000                              
+        p1 = 7 * 10**4                          
+        p_init = 3.5*10**4
+        c_init = 0 
+        C_src = 8*10**-6                                                    
+        d = 12500
+        M0 = 1*10**11
+        rho_sol = 1000 
+
+        # Read in extraction, pressure and copper concentration data from files
+        data1 = np.genfromtxt("ac_q.csv", dtype=float, skip_header=1, delimiter=', ')
+        t_q_data = data1[:,0]    
+        q_data = data1[:,1] * 10**6 * 365                         # Extraction
+        data2 = np.genfromtxt("ac_cu.csv", dtype=float, skip_header=1, delimiter=', ')
+        t_cu_data = data2[:,0]
+        cu_data = np.array(data2[:,1]) * 10**-3 / rho_sol         # Copper conc
+        data3 = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ')
+        t_p_data = data3[:,0]
+        p_data = np.array(data3[:,1]) * 10**6                     # Pressure
+
+
+        P_parameters = [a, b, p0, p1, p_init]
+        C_parameters = [a, b, d, p0, p1, c_init, C_src, M0]
+
+
+        def fit_ode_pressure(t, a, b, p0, p1, p_init):
+
+            # Initialise data and time domain
+            t0 = 1980; t1 = 2016; dt= 0.5
+            data = np.genfromtxt("ac_q.csv", dtype=float, skip_header=1, delimiter=', ')
+            t_data = data[:,0]    
+            q_data = data[:,1] * 10**6 * 365                         
+
+            # Calculate number of points to solve numerically
+            npoints = int((t1 - t0) / dt + 1)
+
+            # Initialise time and pressure solution vectors
+            tsol = np.linspace(t0, t1, npoints)
+            P = np.zeros(npoints)
+            P[0] = p_init
+
+            # Interpolate extraction rate at discrete solution points
+            q = np.interp(tsol, t_data, q_data)
+
+            # Iterate through solution points and solve numerically using Improved Euler method
+            for i in range (0, npoints - 1):
+                # Find euler estimate of next point
+                edxdt = ode_pressure(tsol[i], P[i], q[i], a, b, p0, p1) 
+                ex1 = P[i] + dt*edxdt
+                # Compute IE gradient
+                iedxdt = ode_pressure(tsol[i + 1], ex1, q[i], a, b, p0, p1)
+                # Compute and store IE estimate of pressure
+                P[i+1] = P[i] + dt*(edxdt + iedxdt)/2
+
+            # Return pressure solution
+            P_sol = np.interp(t, tsol,P )
+            return P_sol
+        theta_opt = curve_fit(fit_ode_pressure, t_p_data, p_data, p0 = P_parameters)[0]
+        P_parameters = theta_opt
+        [t_sol1, P_sol] = plot_aquifer_pressure(1980, 2016, 0.5, t_q_data, q_data, t_p_data, p_data, P_parameters)
+
+
+        # Store pressure results to file
+        fp1 = open('Intermediate_P_Solution.csv', 'w')
+        fp1.write('Time_Sol, P_Sol')
+        for i in range(len(t_sol1)):
+            string1 = '\n{}, {}'.format(t_sol1[i], P_sol[i])
+            fp1.write(string1)
+        fp1.close()
+        
+        # Store parameter values to file
+        #fp2 = open('Intermediate_P_parameters.csv', 'w')
+        #fp2.write('P_parameters\n')
+        #string2 = '{}, {}, {}, {}, {}'.format(*P_parameters)
+        #fp2.write(string2)
+        #fp2.close()
+
+
+        def fit_ode_cu(t, a, b, d, p0, p1, c_init, C_src, M0):
+            
+            # Read in pressure solution data
+            data = np.genfromtxt("Intermediate_P_solution.csv", dtype=float, skip_header=1, delimiter=', ')
+            t_sol = data[:,0]    
+            p_sol = data[:,1]
+
+            # Read in parameters already obtained
+            # data = np.genfromtxt("Intermediate_P_parameters.csv", dtype=float, skip_header=1, delimiter=', ')
+            # [a, b, p0, p1, p_init] = data
+
+            # Initialise data and time domain
+            t0 = 1980; t1 = 2016; dt= 0.5
+            # Calculate number of points to solve numerically
+            npoints = int((t1 - t0) / dt + 1)
+
+            # Initialise time and copper concentration solution vectors
+            tsol = np.linspace(t0, t1, npoints)
+            C = np.zeros(npoints)
+            C[0] = c_init
+            # Obtain pressure values at discrete solution points, using inputted pressure solution
+            p = np.interp(tsol, t_sol, P_sol)
+            
+            # Iterate through solution points and solve numerically using Improved Euler method
+            for i in range (0, npoints - 1):
+                # Find euler estimate of next point
+                edxdt = ode_cu(tsol[i], p[i], C[i], a, b, d, p0, p1, C_src, M0)
+                ex1 = C[i] + dt*edxdt
+                # Compute IE gradient
+                iedxdt = ode_cu(tsol[i + 1], p[i+1], ex1, a, b, d, p0, p1, C_src, M0)
+                # Compute and store IE estimate of copper concentration
+                C[i+1] = C[i] + 0.5 * dt * (edxdt + iedxdt)
+
+            # Return copper concentration solution
+            C_val = np.interp(t, tsol, C)
+            return C_val
+        theta_opt = curve_fit(fit_ode_cu, t_cu_data, cu_data, p0 = C_parameters)[0]
+        C_parameters = theta_opt
+        [t_sol2, Cu_sol] = plot_aquifer_cu(1980, 2016, 0.5, t_sol1, P_sol, t_cu_data, cu_data, C_parameters)
+        print(C_parameters)
+
+        
