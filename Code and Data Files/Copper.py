@@ -1,6 +1,7 @@
 # Import libraries
 import numpy as np
 from matplotlib import pyplot as plt
+from Helper_Func import *
 #################################################################################################
 
 ### COPPER CONCENTRATION FUNCTIONS ###
@@ -156,5 +157,15 @@ def plot_aquifer_cu(t0, t1, dt, t_sol, P_sol, t_cu_data, cu_data, C_parameters):
 
     # Return model solutions of time and copper concentration
     return m_time, m_cu
+
+# Copper Concentration Solution Evaluator Function (to pass into curve_fit during model calibration)
+def evaluate_copper(f, t0, t1, dt, t_sol, P_sol, theta_P):
+
+    def fit_copper(t, *Extra_C_parameters):
+        C_parameters = get_parameter_set(theta_P, Extra_C_parameters, "cu_all")
+        t_cu_sol, cu_sol = solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters)
+        return np.interp(t, t_cu_sol, cu_sol)
+
+    return fit_copper
 
 

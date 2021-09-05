@@ -110,7 +110,8 @@ def solve_ode_pressure(f, t0, t1, dt, t_data, q_data, P_parameters):
 
 # Pressure ODE Solver and Grapher Function
 def plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_parameters):
-    ''' Plot the kettle LPM over top of the data.
+    ''' 
+        Plot the kettle LPM over top of the data.
 
         Parameters:
         -----------
@@ -127,7 +128,6 @@ def plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_para
         It should contain commands to read and plot the experimental data, run and 
         plot the kettle LPM for hard coded parameters, and then either display the 
         plot to the screen or save it to the disk.
-
     '''
 
     # Obtain the model solution
@@ -146,5 +146,14 @@ def plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_para
 
     # Return model solutions of time and pressure, to use as inputs for plot_aquifer_cu()
     return m_time, m_press
+
+# Pressure Solution Evaluator Function (to pass into curve_fit during model calibration)
+def evaluate_pressure(f, t0, t1, dt, t_q_data, q_data):
+
+    def fit_pressure(t, *P_parameters):
+        t_sol, P_sol = solve_ode_pressure(f, t0, t1, dt, t_q_data, q_data, P_parameters)
+        return np.interp(t, t_sol, P_sol)
+
+    return fit_pressure
 
 
