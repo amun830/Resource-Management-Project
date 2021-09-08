@@ -5,6 +5,7 @@ from Copper import *
 from Helper_Func import *
 from Model_Use_Func import *
 from scipy.optimize import curve_fit
+	
 #################################################################################################
 
 ### SCENARIO MODELLING ###
@@ -103,3 +104,66 @@ else:
     P_ax.legend(handles=[p1, p2, p4b, p4a, p3], loc = 0)
 
 plt.show()
+
+#################################################################################################
+		
+### CALIBRATION ### 
+# Plot both the calibrated pressure and copper concentration models against the historical data, as a visual check
+f, P_ax = plt.subplots(figsize=(14,6))
+Cu_ax = P_ax.twinx()
+plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Year"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, theta_all, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
+P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
+plt.show()
+
+#################################################################################################
+
+### UNCERTAINTY ANALYSIS ###
+def create_posterior_combined(Parameters_best, N):
+    
+    # Unpack best estimates of parameter values
+    a_best, b_best, p0_best, p1_best, p_init_best, dC_src_best, c_init_best, M0_best = get_parameter_set(Parameters_best, None, "get_all")
+
+    # Generate vectors of parameter values
+    par1 = np.linspace(a_best/2,a_best*2, N)            # a
+    par2 = np.linspace(b_best/2,b_best*2, N)            # b
+
+	# Create grid of all parameter combinations
+    A, B = np.meshgrid(par1, par2, indexing='ij')
+	# Initialise matrix for objective function
+    S_p = np.zeros(A.shape)
+    S_cu = np.zeros(A.shape)
+
+    # Read in data for calibration
+    t_p_data, p_data = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ').T
+    t_cu_data, cu_data = np.genfromtxt("ac_cu.csv", dtype=float, skip_header=1, delimiter=', ').T
+
+
+    # Set the error variance, at 0.005MPa for pressure and 0.02mg/L
+    p_var = 10**-4
+    cu_var = 0.01
+
+    # Loop through all parameter combinations, and compute the sum of squares objective function for each
+    for i in range(len(par1)):
+        for j in range(len(par2)):
+                p_model, _ = solve_lpm(t_p_data,[par1[i],par2[j],p0_best, p1_best, p_init_best, dC_src_best, c_init_best, M0_best])
+                _, cu_model = solve_lpm(t_cu_data,[par1[i],par2[j],p0_best, p1_best, p_init_best, dC_src_best, c_init_best, M0_best])
+                S_p[i,j] = np.sum((p_data-p_model)**2)/p_var
+                S_cu[i,j] = np.sum((cu_data-cu_model)**2)/cu_var
+            
+
+    # Compute the posterior
+    Posterior_p = np.exp(-S_p/2.)
+    Posterior_cu = np.exp(-S_cu/2.)
+
+    # Normalise to a probability density function
+    Volume_p = np.sum(Posterior_p) * (par1[1]-par1[0]) * (par2[1]-par2[0])
+    Volume_cu = np.sum(Posterior_cu) * (par1[1]-par1[0]) * (par2[1]-par2[0])
+
+    Posterior_p /= Volume_p
+    Posterior_cu /= Volume_cu
+
+    Posterior = 0.5*Posterior_cu + 0.5*Posterior_p
+
+    return par1, par2, Posterior
+
