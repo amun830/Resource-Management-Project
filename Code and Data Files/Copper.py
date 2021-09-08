@@ -7,7 +7,7 @@ from Helper_Func import *
 ### COPPER CONCENTRATION FUNCTIONS ###
 
 # Copper Concentration ODE Evaluator Function
-def ode_cu(t, P, C, a, b, d, p0, p1, C_src, M0):
+def ode_cu(t, P, C, a, b, dC_src, p0, p1, M0):
     ''' 
         Return the derivative dC/dt at time, t, for given parameters.
 
@@ -47,7 +47,7 @@ def ode_cu(t, P, C, a, b, d, p0, p1, C_src, M0):
         Cdash = 0
 
     # Evaluate derivative numerically at (t, P, C)
-    dCdt = (-(b/a) * (P - p0) * (Cdash - C) + (b/a) * (P - p1) * C - d * (P - 0.5 * (p0 + p1))*C_src)/M0
+    dCdt = (-(b/a) * (P - p0) * (Cdash - C) + (b/a) * (P - p1) * C - dC_src * (P - 0.5 * (p0 + p1)))/M0
 
     # Return derivative
     return dCdt
@@ -93,7 +93,7 @@ def solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters):
     '''
     
     # Unpack parameters
-    [a, b, d, p0, p1, c_init, C_src, M0] = C_parameters
+    [a, b, dC_src, p0, p1, c_init, M0] = C_parameters
 
     # Calculate number of points to solve numerically
     npoints = int((t1 - t0) / dt + 1)
@@ -108,10 +108,10 @@ def solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters):
     # Iterate through solution points and solve numerically using Improved Euler method
     for i in range (0, npoints - 1):
         # Find euler estimate of next point
-        edxdt = f(t[i], p[i], C[i], a, b, d, p0, p1, C_src, M0)
+        edxdt = f(t[i], p[i], C[i], a, b, dC_src, p0, p1, M0)
         ex1 = C[i] + dt*edxdt
         # Compute IE gradient
-        iedxdt = f(t[i + 1], p[i+1], ex1, a, b, d, p0, p1, C_src, M0)
+        iedxdt = f(t[i + 1], p[i+1], ex1, a, b, dC_src, p0, p1, M0)
         # Compute and store IE estimate of copper concentration
         C[i+1] = C[i] + 0.5 * dt * (edxdt + iedxdt)
 
