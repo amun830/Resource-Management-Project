@@ -1,10 +1,19 @@
+########################################### Copper.py ###########################################
+    # 1. ode_cu(), returns the derivative dC/dt at time, t, for given parameters.
+    # 2. solve_ode_cu(), solves the Cu concentration ODE numerically (improved euler method).
+    # 3. plot_aquifer_cu(), resolves the kettle LPM and plots over top of the data.
+    # 4. evaluate_copper(), copper solution helper function for use in scipy.optimize.curve_fit.
+
+
 # Import libraries
 import numpy as np
 from matplotlib import pyplot as plt
 from Helper_Func import *
+
+
 #################################################################################################
 
-### COPPER CONCENTRATION FUNCTIONS ###
+# 1.
 
 # Copper Concentration ODE Evaluator Function
 def ode_cu(t, P, C, a, b, dC_src, p0, p1, M0):
@@ -23,14 +32,14 @@ def ode_cu(t, P, C, a, b, dC_src, p0, p1, M0):
                 Source/sink strength parameter for extraction
         b :     float
                 Recharge strength parameter for pressure recharge
-        d :     float
-                Source/sink strength parameter for surface leaching
+        dC_src :float
+                Copper concentration at surface source, as mass fraction (unitless) times by source/sink strength d (unitless).
         p0 :    float
                 Ambient pressure at low pressure boundary (in Pa)
         p1 :    float
                 Ambient pressure at high pressure boundary (in Pa)
-        Csrc :  float
-                Copper concentration at surface source, as mass fraction (unitless)
+        M0 :    float
+                Mass of aquifer system (in kg).
        
         Returns:
         --------
@@ -52,6 +61,11 @@ def ode_cu(t, P, C, a, b, dC_src, p0, p1, M0):
     # Return derivative
     return dCdt
 
+
+#################################################################################################
+
+# 2.
+
 # Copper Concentration ODE Solver Function
 def solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters):
     ''' Solve an ODE numerically.
@@ -59,37 +73,27 @@ def solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters):
         Parameters:
         -----------
         f : callable
-            Function that returns dxdt given variable and parameter inputs.
+            Function that returns dCdt given variable and parameter inputs.
         t0 : float
             Initial time of solution.
         t1 : float
             Final time of solution.
         dt : float
             Time step length.
-        x0 : float
-            Initial value of solution.
-        pars : array-like
-            List of parameters passed to ODE function f.
+        t_sol : array_like
+            List of time values from given pressure data.
+        P_sol : array_like
+            List of pressure values from given pressure data.
+        C_parameters : array-like
+            List of parameters passed to ODE function f, in order [a, b, dC_src, p0, p1, c_init, M0].
 
         Returns:
         --------
         t : array-like
-            Independent variable solution vector.
-        x : array-like
-            Dependent variable solution vector.
+            Time variable solution vector (years).
+        C : array-like
+            Cu concentration variable solution vector (mass fraction).
 
-        Notes:
-        ------
-        ODE should be solved using the Improved Euler Method. 
-
-        Function q(t) should be hard coded within this method. Create duplicates of 
-        solve_ode for models with different q(t).
-
-        Assume that ODE function f takes the following inputs, in order:
-            1. independent variable
-            2. dependent variable
-            3. forcing term, q
-            4. all other parameters
     '''
     
     # Unpack parameters
@@ -118,26 +122,41 @@ def solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters):
     # Return time and copper concentration solution vectors
     return t, C
 
+
+#################################################################################################
+
+# 3.
+
 # Copper Concentration ODE Solver and Grapher Function
 def plot_aquifer_cu(t0, t1, dt, t_sol, P_sol, t_cu_data, cu_data, C_parameters):
     ''' Plot the kettle LPM over top of the data.
 
         Parameters:
         -----------
-        none
+        t0 : float
+            Initial time of solution (year)
+        t1 : float
+            Final time of solution (year)
+        dt : float
+            Time step length (in years)
+        t_sol : array_like
+            List of time values from given pressure data.
+        P_sol : array_like
+            List of pressure values from given pressure data.
+        t_cu_data : array-like
+            List of time points of given Cu concentration data (years) 
+        cu_data : array-like
+            List of Cu concentration data from given data.
+        C_parameters : array-like
+            List of parameters passed to ODE function f, in order [a, b, dC_src, p0, p1, c_init, M0].
+
 
         Returns:
         --------
-        none
-
-        Notes:
-        ------
-        This function called within if __name__ == "__main__":
-
-        It should contain commands to read and plot the experimental data, run and 
-        plot the kettle LPM for hard coded parameters, and then either display the 
-        plot to the screen or save it to the disk.
-
+        m_time : array-like
+            List of time points of pressure LPM data.
+        m_press : array-like
+            List of Cu concentration values of pressure LPM data.
     '''
     
     # Obtain the model solution
@@ -158,11 +177,39 @@ def plot_aquifer_cu(t0, t1, dt, t_sol, P_sol, t_cu_data, cu_data, C_parameters):
     # Return model solutions of time and copper concentration
     return m_time, m_cu
 
+
+#################################################################################################
+
+# 4.
+
 # Copper Concentration Solution Evaluator Function (to pass into curve_fit during model calibration)
 def evaluate_copper(f, t0, t1, dt, t_sol, P_sol, theta_P):
+    ''' 
+        Cu concentration solution helper function for use in scipy.optimize.curve_fit.
+
+        Parameters:
+        -----------
+        t0 : float
+            Initial time of solution (year)
+        t1 : float
+            Final time of solution (year)
+        dt : float
+            Time step length (in years)
+        t_sol : array-like
+            List of time points of solved pressure part of LPM 
+        P_sol : array-like
+            List of pressure values of solved part of LPM
+        theta_P : array-like
+            List of parameters passed to ODE function f: a, b, p0, p1, p_init (in order)
+
+        Returns:
+        --------
+        fit_copper : callable
+            Function to allow scipy.optimize.curve_fit() to callibrate optimum parameter values for Cu concentration LPM
+    '''
 
     def fit_copper(t, *Extra_C_parameters):
-        C_parameters = get_parameter_set(theta_P, Extra_C_parameters, "cu_all")
+        C_parameters = get_parameter_set(theta_P, Extra_C_parameters, "cu_all")             #Uses Helper_func.py to arange parameters
         t_cu_sol, cu_sol = solve_ode_cu(f, t0, t1, dt, t_sol, P_sol, C_parameters)
         return np.interp(t, t_cu_sol, cu_sol)
 
