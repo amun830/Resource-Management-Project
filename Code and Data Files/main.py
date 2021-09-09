@@ -35,7 +35,7 @@ if __name__ == "__main__":
         host[0].legend([num, ana],['Numerical Solution', 'Analytical Solution'])
         
         # 2. *** Benchmarking for solve_ode_cu ***
-        # We will use the simplified condition that the pressure is constant, P(t) = P < p0 at all times [so C' = 0]
+        # We will use the simplified condition that the pressure is constant, P(t) = P > p0 at all times [so C' = 0]
         # The analytical solution to M0 dC/dt = -b/a(P-p0)(C' - C) + b/a(P-p1)C - d(P- (p0+p1)/2)C_src is, using the integrating factor method, 
         # C(t) = -k1/k2 + (c_init + k1/k2)e^k2t, where k1 = (-bC'(P-p0)/a - dC_scr(P - (p0+p1)/2))/M0 and k2 = b(2P - p0 - p1)/(aM0)
         # Computing the analytical and numerical solutions for a simple set of parameters and conditions,
