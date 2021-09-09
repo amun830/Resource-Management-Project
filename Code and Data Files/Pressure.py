@@ -1,9 +1,18 @@
+########################################## Pressure.py ##########################################
+    # 1. ode_pressure(), returns the derivative dP/dt at time, t, for given parameters.
+    # 2. solve_ode_pressure(), solves the pressure ODE numerically (improved euler method).
+    # 3. plot_aquifer_pressure(), resolves the kettle LPM and plots over top of the data.
+    # 4. evaluate_pressure(), pressure solution helper function for use in scipy.optimize.curve_fit.
+
+
 # Import libraries
 import numpy as np
 from matplotlib import pyplot as plt
+
+
 #################################################################################################
 
-### PRESSURE FUNCTIONS ###
+# 1. 
 
 # Pressure ODE Evaluator Function
 def ode_pressure(t, P, q, a, b, p0, p1):
@@ -35,10 +44,16 @@ def ode_pressure(t, P, q, a, b, p0, p1):
     '''
 
     # Evaluate derivative numerically at (t,P)
+    #rate = extraction - recharge at low pressure boundary - recharge at high pressure boundary
     dPdt = - a * q - b * (P - p0) - b * (P - p1)
 
     # Return derivative
     return dPdt
+
+
+#################################################################################################
+
+# 2.
 
 # Pressure ODE Solver Function
 def solve_ode_pressure(f, t0, t1, dt, t_data, q_data, P_parameters):
@@ -55,30 +70,20 @@ def solve_ode_pressure(f, t0, t1, dt, t_data, q_data, P_parameters):
             Final time of solution (year)
         dt : float
             Time step length (in years)
-        p_init : float
-            Initial pressure of the aquifer (in Pa)
+        t_data : array-like
+            [t0, t1]
+        q_data : array-like
+            [Initial extraction rate, Final extraction rate]
         P_parameters : array-like
             List of parameters passed to ODE function f: a, b, p0, p1, p_init (in order)
 
         Returns:
         --------
         t : array-like
-            Independent variable solution vector.
-        x : array-like
-            Dependent variable solution vector.
+            Time variable solution vector (years).
+        P : array-like
+            Pressure variable solution vector (Pa).
 
-        Notes:
-        ------
-        ODE should be solved using the Improved Euler Method. 
-
-        Function q(t) should be hard coded within this method. Create duplicates of 
-        solve_ode for models with different q(t).
-
-        Assume that ODE function f takes the following inputs, in order:
-            1. independent variable
-            2. dependent variable
-            3. forcing term, q
-            4. all other parameters
     '''
 
     # Unpack parameters
@@ -108,6 +113,11 @@ def solve_ode_pressure(f, t0, t1, dt, t_data, q_data, P_parameters):
     # Return time and pressure solution vectors
     return t, P
 
+
+#################################################################################################
+
+# 3.
+
 # Pressure ODE Solver and Grapher Function
 def plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_parameters):
     ''' 
@@ -115,19 +125,30 @@ def plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_para
 
         Parameters:
         -----------
-        none
+        t0 : float
+            Initial time of solution (year)
+        t1 : float
+            Final time of solution (year)
+        dt : float
+            Time step length (in years)
+        t_q_data : array-like
+            List of time points of given extraction data (q) 
+        q_data : array-like
+            List of extraction rates from given data.
+        t_p_data : array-like
+            List of time points of given pressure data. 
+        p_data : array-like
+            List of pressure values from given data.
+        P_parameters : array-like
+            List of parameters passed to ODE function f: a, b, p0, p1, p_init (in order)
 
         Returns:
         --------
-        none
+        m_time : array-like
+            List of time points of pressure LPM data.
+        m_press : array-like
+            List of pressure values of pressure LPM data.
 
-        Notes:
-        ------
-        This function called within if __name__ == "__main__":
-
-        It should contain commands to read and plot the experimental data, run and 
-        plot the kettle LPM for hard coded parameters, and then either display the 
-        plot to the screen or save it to the disk.
     '''
 
     # Obtain the model solution
@@ -147,8 +168,34 @@ def plot_aquifer_pressure(t0, t1, dt, t_q_data, q_data, t_p_data, p_data, P_para
     # Return model solutions of time and pressure, to use as inputs for plot_aquifer_cu()
     return m_time, m_press
 
+
+#################################################################################################
+
+# 4.
+
 # Pressure Solution Evaluator Function (to pass into curve_fit during model calibration)
 def evaluate_pressure(f, t0, t1, dt, t_q_data, q_data):
+    ''' 
+        Pressure solution helper function for use in scipy.optimize.curve_fit.
+
+        Parameters:
+        -----------
+        t0 : float
+            Initial time of solution (year)
+        t1 : float
+            Final time of solution (year)
+        dt : float
+            Time step length (in years)
+        t_sol : array-like
+            List of time points of given extraction data (q) 
+        q_sol : array-like
+            List of extraction rates from given data
+
+        Returns:
+        --------
+        fit_pressure : callable
+            Function to allow scipy.optimize.curve_fit() to callibrate optimum parameter values for pressure part of LPM.
+    '''
 
     def fit_pressure(t, *P_parameters):
         t_sol, P_sol = solve_ode_pressure(f, t0, t1, dt, t_q_data, q_data, P_parameters)

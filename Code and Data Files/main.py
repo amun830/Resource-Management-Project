@@ -1,3 +1,13 @@
+########## main.py ##########
+    # 1. Creates benchmarking plots.
+    # 2. Calibrates model (must be completed for following sections)
+    # 3. Generates plots of future senario predictions.
+    # 4. Conducts uncertancy analysis.
+    # 5. Generates plots of future senario predictions with uncertancy.
+
+    # Note - Toggle if statements to 'true' to run desired sections.
+
+
 # Import libraries and functions
 import numpy as np
 from matplotlib import pyplot as plt
@@ -14,8 +24,10 @@ if __name__ == "__main__":
 
     #################################################################################################
 
+    # 1.
+
     ########## Generate benchmark plots for both the pressure and copper numerical solvers ##########
-    if False:
+    if True:
         # *** 1. Benchmarking for solve_ode_pressure ***
         # We will use the simplified condition that the extraction is constant, q(t) = q0
         # The analytical solution to dP/dt = -aq0 -b(P-p0) - b(P-p1) is, using the integrating factor method, 
@@ -100,6 +112,8 @@ if __name__ == "__main__":
 
     #################################################################################################
 
+    # 2.
+
     ########## 			Calibrate model to the historical data (all SI units)			   ##########
     if True:   # Note this condition must be set to True for all of the code following it to work
 
@@ -140,7 +154,7 @@ if __name__ == "__main__":
         t_sol, P_sol = solve_ode_pressure(ode_pressure, t0, t1, dt, t_q_data, q_data, theta_P)
         # Calibrate copper concentration model parameters, using the above pressure solution
         theta_C_extra, cov_C_extra = curve_fit(evaluate_copper(ode_cu, t0, t1, dt, t_sol, P_sol, theta_P), t_cu_data, cu_data, p0 = Extra_C_parameters)  # Could add bounds=([-np.inf, -1,0],[np.inf, 1, np.inf])
-        # Combine parameters into the calibrated parameter vector, theta_all
+        # Combine parameters into the calibrated parameter vector, _all_all
         theta_all = get_parameter_set(theta_P, theta_C_extra, "theta_all")
 
         # Find variance of parameter estimates
@@ -149,6 +163,8 @@ if __name__ == "__main__":
 
 
     #################################################################################################
+
+    # 3.
 
     ##########	        Use model to simulate "What-if" scenarios and forecast     	       ##########
     if True:
@@ -220,6 +236,8 @@ if __name__ == "__main__":
 
     #################################################################################################
 
+    # 4.
+
     ##########         			    Conduct Uncertainty Analysis	  			   	       ##########
     if True:
 
@@ -241,6 +259,8 @@ if __name__ == "__main__":
 
 
     #################################################################################################
+
+    # 5.
 
     ##########	        Simulate "What-if" scenarios and forecast WITH UNCERTAINTY         ##########
     if True:
