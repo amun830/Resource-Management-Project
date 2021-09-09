@@ -96,7 +96,6 @@ if __name__ == "__main__":
         f.set_size_inches(15,9)
         plt.tight_layout(pad=1.5, h_pad=2.5, w_pad=2.5, rect=None)
         plt.savefig("Benchmarking_Plots.png")
-        plt.show()
 
 
     #################################################################################################
@@ -152,7 +151,7 @@ if __name__ == "__main__":
     #################################################################################################
 
     ##########	        Use model to simulate "What-if" scenarios and forecast     	       ##########
-    if False:
+    if True:
         
         ### SCENARIO MODELLING ###
         
@@ -175,7 +174,7 @@ if __name__ == "__main__":
 
         # Initialise loop lists
         scenarios = [40, 20, 7.5, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
-        styles = ['m', 'g', 'b', 'c', 'pink']		# Corresponding plot styles
+        styles = ['r', 'lime', 'b', 'c', 'm']		# Corresponding plot styles
         P_handles = []; Cu_handles = []
 
         # Plot the different scenarios
@@ -235,22 +234,22 @@ if __name__ == "__main__":
         # plot_posterior2D(dC_src,M0,"dC_src (ms)", "M0 (kg)", "Posterior of 2 Copper Conc. Parameters", P2)
 
         n_samples = 100
-        ab_samples = construct_samples(a,b, theta_all, P1, n_samples, "pressure", True)
+        ab_samples = construct_samples(a,b, theta_all, P1, n_samples, "pressure", False)
         # model_ensemble(ab_samples, theta_all, "pressure")
-        dCM0_samples = construct_samples(dC_src,M0, theta_all, P2, n_samples, "copper", True)
+        dCM0_samples = construct_samples(dC_src,M0, theta_all, P2, n_samples, "copper", False)
         # model_ensemble(dCM0_samples, theta_all, "copper")
 
 
     #################################################################################################
 
-    ##########	Use model to simulate "What-if" scenarios and forecast, with uncertainty   ##########
+    ##########	        Simulate "What-if" scenarios and forecast WITH UNCERTAINTY         ##########
     if True:
         
         ### SCENARIO MODELLING ###
         
         # Period to model into the future:
-        predict = 60
-        t1 += predict
+        predict2 = 60
+        t1 = 2016 + predict2
         # Initialise and configure plots: set the following to True to have separate plots
         combined = False
         if combined == True:
@@ -267,15 +266,15 @@ if __name__ == "__main__":
 
         # Initialise loop lists
         scenarios = [40, 20, 7.5, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
-        styles = ['m', 'g', 'b', 'c', 'pink']		# Corresponding plot styles
-        Param = theta_all
+        styles = ['r', 'lime', 'b', 'c', 'm']		# Corresponding plot styles
+        Param = np.copy(theta_all)
 
 
         # Plot the different scenarios
         for i in range(len(scenarios)):
             outcome = scenarios[i]
             style = styles[i]
-            t_q_data_future = np.concatenate([t_q_data, [t_q_data[-1]+0.00001, t_q_data[-1]+predict]])
+            t_q_data_future = np.concatenate([t_q_data, [t_q_data[-1]+0.00001, t_q_data[-1]+predict2]])
             q_data_future = np.concatenate([q_data, 2*[outcome * 10**3 * 365 * rho_sol]])
             name = "{} ML/day".format(outcome)
             
@@ -313,10 +312,7 @@ if __name__ == "__main__":
         Cu_ax.legend(loc=4)
 
 
-        plt.show()
-
-
     #################################################################################################
 
-    # Show all plots
+    # Show all figures
     plt.show()
