@@ -13,7 +13,7 @@ from scipy.optimize import curve_fit
 a = 1 * 10**-6                       
 b = 6 * 10**-2          
 p0 = 1000                              
-p1 = 7 * 10**4                          
+p1 = 7 * 10**4                       
 p_init = 3.5*10**4
 dC_src = 12500 * 8*10**-6
 c_init = 0 
@@ -174,35 +174,37 @@ def create_posterior_combined(Parameters_best, N):
 
 ### CALIBRATION ###
 
-all_time_data = np.append(t_p_data, t_cu_data)
-all_data = np.append(p_data, cu_data)
+if False: 
+    all_time_data = np.append(t_p_data, t_cu_data)
+    all_data = np.append(p_data, cu_data)
 
-def combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data):
+    def combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data):
 
-    def combinedFunction(all_times, *Parameters):
-        
-        # single data reference passed in, extract separate data
-        p_times = all_times[:len(t_p_data)] # first data
-        cu_times = all_times[len(t_p_data):] # second data
+        def combinedFunction(all_times, *Parameters):
+            
+            # single data reference passed in, extract separate data
+            p_times = all_times[:len(t_p_data)] # first data
+            cu_times = all_times[len(t_p_data):] # second data
 
-        P_parameters, Cu_parameters = get_parameter_set(Parameters, None, "split")
+            P_parameters, Cu_parameters = get_parameter_set(Parameters, None, "split")
 
-        t_sol, P_sol = solve_ode_pressure(ode_pressure, t0, t1, dt, t_q_data, q_data, P_parameters)
-        result1 = np.interp(p_times, t_sol, P_sol)
+            t_sol, P_sol = solve_ode_pressure(ode_pressure, t0, t1, dt, t_q_data, q_data, P_parameters)
+            result1 = np.interp(p_times, t_sol, P_sol)
 
-        t_sol2, Cu_sol = solve_ode_cu(ode_cu, t0, t1, dt, t_sol, P_sol, Cu_parameters)
-        result2 = np.interp(cu_times, t_sol2, Cu_sol)
+            t_sol2, Cu_sol = solve_ode_cu(ode_cu, t0, t1, dt, t_sol, P_sol, Cu_parameters)
+            result2 = np.interp(cu_times, t_sol2, Cu_sol)
 
-        return np.append(result1, result2)
+            return np.append(result1, result2)
 
-    return combinedFunction
+        return combinedFunction
 
-all_mean, all_var = curve_fit(combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data), all_time_data, all_data, [a, b, p0, p1, p_init,dC_src, c_init, M0])
+    all_mean, all_var = curve_fit(combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data), all_time_data, all_data, [a, b, p0, p1, p_init,dC_src, c_init, M0])
 
 
-f_P, P_ax = plt.subplots(figsize=(12,8)); f_Cu, Cu_ax = plt.subplots(figsize=(12,8))
-P_ax.set_xlabel("Time (Year)"); Cu_ax.set_xlabel("Time (Year)")
-P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
-P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure"); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration")
+    f_P, P_ax = plt.subplots(figsize=(12,8)); f_Cu, Cu_ax = plt.subplots(figsize=(12,8))
+    P_ax.set_xlabel("Time (Year)"); Cu_ax.set_xlabel("Time (Year)")
+    P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+    P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure"); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration")
 
-plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, all_mean, True, 1, 1, 'k-', 'k-', "Pressure", "Copper", "mg/L")
+    plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, all_mean, True, 1, 1, 'k-', 'k-', "Pressure", "Copper", "mg/L")
+    plt.show()
