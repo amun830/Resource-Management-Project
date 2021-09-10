@@ -1,3 +1,12 @@
+######################################### Uncertainty_Func.py #########################################
+    #1. create_posterior(), generates posterior distribution of LPM by calibrating off hystoric data.
+    #2. plot_posterior2D(), plots posterior solution solved in 1.
+    #3. fit_mvn(), calculates optimum parameters of a multivariate normal distribution.
+    #4. construct_samples(), Constructs samples from a multivariate normal distribution fitted to the data.
+    #5. plot_samples(), Plots ...
+    #6. model_ensemble(), Runs the model for given parameter samples and plots using 5.
+
+
 # Import libraries
 import numpy as np
 from Pressure import *
@@ -7,10 +16,32 @@ from Model_Use_Func import *
 import matplotlib
 #################################################################################################
 
-### UNCERTAINTY ANALYSIS FUNCTIONS ###
+#1.
 
 # Posterior Distribution Generator Function
 def create_posterior(Parameters_best, N, quantity):
+    '''
+        Generates posterior distribution of LPM by calibrating off hystoric data.
+
+        Parameters:
+        -----------
+        Parameters_best : array-like
+            Parameters of LPM.
+        N : Int
+            ????
+        quantity :  string
+            Identifier of ????.
+       
+        Returns:
+        --------
+        par1 :  array-like
+            Vector of first parameter values.
+        par2 :  array-like
+            Vector of second parameter values.
+        Posterior : ???
+            ????
+    
+    '''
 
     # Unpack best estimates of parameter values
     a_best, b_best, p0_best, p1_best, p_init_best, dC_src_best, c_init_best, M0_best = get_parameter_set(Parameters_best, None, "get_all")
@@ -60,14 +91,37 @@ def create_posterior(Parameters_best, N, quantity):
 
     return par1, par2, Posterior
 
+
+#################################################################################################
+
+#2.
+
 # Posterior Distribution Plotting Function
 def plot_posterior2D(par1, par2, name1, name2, title, P):	
-    """Plot posterior distribution
+    """
+        Plots posterior distribution
 
-    Args:
-        a (numpy array): a distribution vector
-        b (numpy array): b distribution vector
-        P (numpy array): posterior matrix
+
+        Parameters:
+        -----------
+        par1 :  array-like
+            Vector of first parameter values.
+        par2 :  array-like
+            Vector of second parameter values.
+        name1 : string
+            X label.
+        name2 : string
+            Y label.
+        title : string
+            Plot title.
+        P : ???
+            Posterior matrix.
+       
+        Returns:
+        --------
+        fig :   plt.figure()
+            Plot of posterior distribution.
+    
     """
     
     # grid of parameter values: returns every possible combination of parameters in a and b
@@ -87,6 +141,10 @@ def plot_posterior2D(par1, par2, name1, name2, title, P):
     
     return fig
 
+
+#################################################################################################
+
+#3.
 
 def fit_mvn(parspace, dist):
     """Finds the parameters of a multivariate normal distribution that best fits the data
@@ -130,6 +188,10 @@ def fit_mvn(parspace, dist):
     return np.array(mean), np.array(cov)
 
 
+#################################################################################################
+
+#4.
+
 def construct_samples(par1,par2, Parameters, P,N_samples, quantity, plot):
 	''' 
     This function constructs samples from a multivariate normal distribution
@@ -137,14 +199,20 @@ def construct_samples(par1,par2, Parameters, P,N_samples, quantity, plot):
 
 	Parameters:
     -----------
-		a : array-like
-			Vector of 'a' parameter values.
-		b : array-like
-			Vector of 'b' parameter values.
+		par1 :  array-like
+            Vector of first parameter values.
+        par2 :  array-like
+            Vector of second parameter values.
+        Parameters :    array-like
+            Vector of LPM parameters.
 		P : array-like
 			Posterior probability distribution.
 		N_samples : int
 			Number of samples to take.
+        quantity :  string
+            Identifier ("copper" or "pressure")
+        plot : boolean
+            If true plot the samples
 
 	Returns:
 	--------
@@ -167,7 +235,30 @@ def construct_samples(par1,par2, Parameters, P,N_samples, quantity, plot):
 	return samples
 
 
+#################################################################################################
+
+#5.
+
 def plot_samples(par1, par2, Parameters, P, samples, quantity):
+    ''' 
+    This function plots multivariate normal samples.
+
+	Parameters:
+    -----------
+		par1 :  array-like
+            Vector of first parameter values.
+        par2 :  array-like
+            Vector of second parameter values.
+        Parameters :    array-like
+            Vector of LPM parameters.
+		P : array-like
+			Posterior probability distribution.
+		samples : array-like
+			parameter samples from the multivariate normal
+        quantity :  string
+            Identifier ("copper" or "pressure")
+
+	'''
     # plotting
     fig = plt.figure(figsize=[10., 7.])				# open figure
     ax1 = fig.add_subplot(111, projection='3d')		# create 3D axes
@@ -207,6 +298,10 @@ def plot_samples(par1, par2, Parameters, P, samples, quantity):
     plt.show()
 
 
+#################################################################################################
+
+#6.
+
 def model_ensemble(samples, Parameters,quantity):
     ''' 
     Runs the model for given parameter samples and plots the results.
@@ -214,8 +309,13 @@ def model_ensemble(samples, Parameters,quantity):
 	Parameters:
 	-----------
 	samples : array-like
-	parameter samples from the multivariate normal
+	    parameter samples from the multivariate normal.
+    Parameters :    array-like
+        Vector of LPM parameters.
+    quantity :  string
+            Identifier ("copper" or "pressure")
     '''
+
     t = np.linspace(1980, 2018, 50)
 
     f,axis = plt.subplots(1,1)
@@ -242,9 +342,7 @@ def model_ensemble(samples, Parameters,quantity):
 
     axis.plot([],[],'k-',lw=0.5,alpha=0.4,label="Model Ensemble")
 
-	
-	# 4. plot Wairakei data as error bars
-	# *hint* see TASK 1 for appropriate plotting commands
+
     if quantity == "pressure":
         v = 4*10**-5
         axis.errorbar(t_data,data,yerr=v,fmt='ro', label=' Pressure data')
