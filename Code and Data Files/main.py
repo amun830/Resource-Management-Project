@@ -5,7 +5,7 @@
     # 4. Conducts uncertancy analysis.
     # 5. Generates plots of future senario predictions with uncertancy.
 
-    # Note - Toggle if statements to 'true' to run desired sections.
+    # Note - Toggle if statements to 'True' to run desired sections.
 
 
 # Import libraries and functions
@@ -288,6 +288,8 @@ if __name__ == "__main__":
         scenarios = [40, 20, 7.5, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
         styles = ['r', 'lime', 'b', 'c', 'm']		# Corresponding plot styles
         Param = np.copy(theta_all)
+        coppermax_times = np.array([])
+        coppermax_val = np.array([])
 
 
         # Plot the different scenarios
@@ -304,13 +306,21 @@ if __name__ == "__main__":
                 plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_q_data_future, q_data_future, Param, 0, 1, style)
                 
                 Param[0:2] = ab_samples[j]
-                plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_q_data_future, q_data_future, Param, 1, 0, style)
+                t_cu_sol, Cu_sol = plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_q_data_future, q_data_future, Param, 1, 0, style)
 
+                # Compute interval prediction if extraction is the recommended amount
+                if outcome == 5:
+                    index = np.argmax(Cu_sol)
+                    coppermax_val = np.append(coppermax_val, Cu_sol[index])
+                    coppermax_times = np.append(coppermax_times, t_cu_sol[index])
+
+            # Add scenario labels
             P_ax.plot([],[], style,lw=1.2, alpha=1, label=name)
             Cu_ax.plot([],[], style, lw=1.2, alpha=1, label=name)
-        
-        P_ax.plot([],[], 'k-',lw=1.2, alpha=1, label="Best fit model")
-        Cu_ax.plot([],[], 'k-',lw=1.2, alpha=1, label="Best fit model")
+
+        # Add best fit model labels        
+        P_ax.plot([],[], 'k-',lw=1.2, alpha=1, label="Best fit models")
+        Cu_ax.plot([],[], 'k-',lw=1.2, alpha=1, label="Best fit models")
 
 
         # Add a line for the recommended copper concentration limits
@@ -327,9 +337,15 @@ if __name__ == "__main__":
         P_ax.errorbar(t_p_data,10**-6 * p_data,yerr=6*10**-3,fmt='ro', label=' Historical data', zorder= 1000)
         Cu_ax.errorbar(t_cu_data,10**6 * cu_data,yerr=5*10**-2,fmt='ro', label='Historical data', zorder= 1000)
 
-
+        # Add legends
         P_ax.legend(loc=0)
         Cu_ax.legend(loc=4)
+
+        # Compute 90% confidence interval for the time and value of the copper peak, under the recommendation
+        time_int_90 = [np.percentile(coppermax_times,5), np.percentile(coppermax_times,95)]
+        coppermax_int_90 = [np.percentile(coppermax_val,5), np.percentile(coppermax_val,95)]
+        print("A 90% confidence interval for the peak copper concentration in the next 60 years, under the recommended maximum extraction of 5ML/day, is {}, in mg/L".format(coppermax_int_90))
+        print("Also, the 90% confidence interval for the corresponding year that this occurs is {}".format(time_int_90))
 
 
     #################################################################################################
