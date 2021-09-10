@@ -106,7 +106,7 @@ def solve_ode_pressure(f, t0, t1, dt, t_data, q_data, P_parameters):
         edxdt = f(t[i], P[i], q[i], a, b, p0, p1) 
         ex1 = P[i] + dt*edxdt
         # Compute IE gradient
-        iedxdt = f(t[i + 1], ex1, q[i], a, b, p0, p1)
+        iedxdt = f(t[i + 1], ex1, q[i + 1], a, b, p0, p1)
         # Compute and store IE estimate of pressure
         P[i+1] = P[i] + dt*(edxdt + iedxdt)/2
 
