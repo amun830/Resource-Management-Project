@@ -30,7 +30,7 @@ def create_posterior(Parameters_best, N, quantity):
         N : Int
             ????
         quantity :  string
-            Identifier of ????.
+            Identifier, "pressure" or "copper".
        
         Returns:
         --------
