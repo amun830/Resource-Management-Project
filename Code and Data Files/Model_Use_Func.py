@@ -210,4 +210,4 @@ def plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, 
         Cu_ax.plot(t_cu_sol[:fut], Cu_sol[:fut], 'k', lw=0.3, alpha=0.2)
         Cu_ax.plot(t_cu_sol[fut-1:], Cu_sol[fut-1:], style, lw=0.3, alpha=0.2)
 
-    return t_cu_sol, Cu_sol
+    return P_sol, t_cu_sol, Cu_sol
