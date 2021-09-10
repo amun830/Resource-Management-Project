@@ -202,7 +202,7 @@ def plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, 
     
     if P==1:
         fut = np.where(t_p_sol>2018)[0][0]
-        P_ax.plot(t_p_sol[:fut+1], P_sol[:fut+1], 'k', lw=0.3, alpha=0.2)
+        P_ax.plot(t_p_sol[:fut], P_sol[:fut], 'k', lw=0.3, alpha=0.2)
         P_ax.plot(t_p_sol[fut-1:], P_sol[fut-1:], style, lw=0.3, alpha=0.2)
     
     if Cu ==1:
