@@ -286,10 +286,10 @@ def plot_samples(par1, par2, Parameters, P, samples, quantity):
 
     # plotting upkeep
     if quantity == "pressure":
-        ax1.set_xlabel('a (1/ms^2)', fontsize = 12, color='c')
-        ax1.set_ylabel('b (1/s)', fontsize = 12, color='c')
+        ax1.set_xlabel('a (1/m year^2)', fontsize = 12, color='c')
+        ax1.set_ylabel('b (1/year)', fontsize = 12, color='c')
     elif quantity == "copper":
-        ax1.set_xlabel('dC_src (ms)', fontsize=12, color='c')
+        ax1.set_xlabel('dC_src (m year)', fontsize=12, color='c')
         ax1.set_ylabel('M0 (kg)', fontsize=12, color='c')
     ax1.set_zlim(0., )
     ax1.set_zlabel('P', fontsize=12, color='r')

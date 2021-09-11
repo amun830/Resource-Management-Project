@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     # 2a. 
     
-    ########## 			Calibrate model to the historical data (all SI units)			   ##########
+    ########## 		Calibrate model to the historical data (all SI units) - Attempt 1	   ##########
     if True:    # Note this condition must be set to True for all of the code following it to work
         
         # Initialise estimates of parameter values
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     # 2b.
 
-    ########## 			Calibrate model to the historical data (all SI units)			   ##########
+    ########## 		Calibrate model to the historical data (all SI units) - Attempt 2	   ##########
     if True:   # Note this condition must be set to True for all of the code following it to work
 
         # Initialise estimates of parameter values
@@ -355,7 +355,6 @@ if __name__ == "__main__":
         coppermax_val = np.array([])
         pressure_steady = np.array([])
 
-
         # Plot the different scenarios
         for i in range(len(scenarios)):
             outcome = scenarios[i]
@@ -364,6 +363,9 @@ if __name__ == "__main__":
             q_data_future = np.concatenate([q_data, 2*[outcome * 10**3 * 365 * rho_sol]])
             name = "{} ML/day".format(outcome)
             
+            case_interval_pressure = np.array([])
+            case_interval_copper = np.array([])
+
             for j in range(len(ab_samples)):
                 Param[5] = dCM0_samples[j][0]
                 Param[7] = dCM0_samples[j][1]
@@ -378,10 +380,18 @@ if __name__ == "__main__":
                     coppermax_val = np.append(coppermax_val, Cu_sol[index])
                     coppermax_times = np.append(coppermax_times, t_cu_sol[index])
                     pressure_steady = np.append(pressure_steady,P_sol[-1])
+                
+                case_interval_pressure = np.append(case_interval_pressure, P_sol[-1])
+                case_interval_copper = np.append(case_interval_copper, Cu_sol[-1])
 
             # Add scenario labels
             P_ax.plot([],[], style,lw=1.2, alpha=1, label=name)
             Cu_ax.plot([],[], style, lw=1.2, alpha=1, label=name)
+
+            # Compute prediction intervals (long-term value of property)
+            case_interval_pressure_90 = [np.percentile(case_interval_pressure,5), np.percentile(case_interval_pressure,95)]
+            case_interval_copper_90 = [np.percentile(case_interval_copper,5), np.percentile(case_interval_copper,95)]
+            print("90% pressure and copper interval after 60 years for {}: {}, {}".format(name, case_interval_pressure_90, case_interval_copper_90))
 
         # Add best fit model labels        
         P_ax.plot([],[], 'k-',lw=1.2, alpha=1, label="Best fit models")
