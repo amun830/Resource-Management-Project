@@ -169,7 +169,7 @@ if __name__ == "__main__":
             return combinedFunction
 
         # Fit model
-        all_mean, all_var = curve_fit(combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data), all_time_data, all_data, [a, b, p0, p1, p_init,dC_src, c_init, M0])
+        all_mean, all_var = curve_fit(combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data), all_time_data, all_data, [a, b, p0, p1, p_init,dC_src, c_init, M0], bounds=(0,[1,1, 10**5,10**7,10**7, 1000, 1, np.inf]))
 
         # Plot calibrated model
         f, P_ax = plt.subplots(figsize=(14,6))
@@ -177,6 +177,10 @@ if __name__ == "__main__":
         plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Time (Year)"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
         p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, all_mean, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
         P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
+        print("First calibration best-fit parameters: {}".format(all_mean))
+
+        # Plot misfit
+        f_mis, ax_mis = plot_model_misfit(all_mean, t_p_data, 10**-6 * p_data, t_cu_data, 10**6 * cu_data)
 
 
     #################################################################################################

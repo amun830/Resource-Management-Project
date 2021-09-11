@@ -1,7 +1,8 @@
 ######################################### Model_Use_Func.py #########################################
     #1. plot_aquifer_model(), Solution Plotter Function.
-    #2. solve_lpm(), Lumped Parameter Model Solver Function.
-    #3. plot_aquifer_forecast_uncertainty(), Plots forcasted LPM with uncertainty.
+    #2. plot_model_misfit(). Plots the misfit of a model (against data)
+    #3. solve_lpm(), Lumped Parameter Model Solver Function.
+    #4. plot_aquifer_forecast_uncertainty(), Plots forcasted LPM with uncertainty.
 
 
 # Import libraries
@@ -111,7 +112,36 @@ def plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, Parameters, his
 
 #################################################################################################
 
-#2. 
+#2.
+
+def plot_model_misfit(Parameters, t_p_data, p_data, t_cu_data, cu_data):
+
+    # Solve model at times
+    f, ax = plt.subplots(nrows=1,ncols=2,figsize=(14,5))
+    P_model, _ = solve_lpm(t_p_data, Parameters)
+    _, Cu_model = solve_lpm(t_cu_data, Parameters)
+
+    # Compute misfit
+    P_misfit = P_model - p_data
+    Cu_misfit = Cu_model - cu_data
+
+    # Configure plot
+    ax[0].plot(t_p_data, P_misfit, 'kx')
+    ax[0].set_title("Pressure Model Misfit")
+    ax[0].set_xlabel("Time (Year)")
+    ax[0].set_ylabel("Pressure Misfit (MPa)")
+    ax[1].plot(t_cu_data, Cu_misfit, 'rx')
+    ax[1].set_title("Copper Concentration Model Misfit")
+    ax[1].set_xlabel("Time (Year)")
+    ax[1].set_ylabel("Copper Conc. Misfit (mg/L)")
+    ax[0].axhline(y=0, color= 'grey', linestyle='--')
+    ax[1].axhline(y=0, color= 'grey', linestyle='--')
+
+    return f, ax
+
+#################################################################################################
+
+#3. 
 
 
 # Lumped Parameter Model Solver Function (solves the LPM in the data time domain, and evaluates at certain times, given the parameters)
@@ -156,7 +186,7 @@ def solve_lpm(t, Parameters):
 
 #################################################################################################
 
-#3. 
+#4. 
 
 def plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, Parameters, P, Cu, style):
     ''' 
