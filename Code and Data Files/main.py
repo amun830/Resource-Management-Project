@@ -195,7 +195,7 @@ if __name__ == "__main__":
             P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure"); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration")
 
         # Initialise loop lists
-        scenarios = [40, 20, 7.5, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
+        scenarios = [40, 20, 10, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
         styles = ['r', 'lime', 'b', 'c', 'm']		# Corresponding plot styles
         P_handles = []; Cu_handles = []
 
@@ -233,16 +233,16 @@ if __name__ == "__main__":
             P_ax.legend(handles=P_handles, loc = 0); Cu_ax.legend(handles=Cu_handles, loc = 4)
             
             # Add annotations to the plots
-            Cu_ax.annotate("Double", (2060, 1.42))
-            Cu_ax.annotate("No change", (2060, 1.26))
-            Cu_ax.annotate("Reduced", (2060, 1.14))
-            Cu_ax.annotate("Reduced more", (2060, 1.06))
-            Cu_ax.annotate("Stop", (2060, 0.88))
-            P_ax.annotate("Double", (2063, -0.081))
+            Cu_ax.annotate("Double", (2060, 1.45))
+            Cu_ax.annotate("No change", (2060, 1.28))
+            Cu_ax.annotate("Reduced", (2060, 1.18))
+            Cu_ax.annotate("Reduced more", (2060, 1.04))
+            Cu_ax.annotate("Stop", (2060, 0.867))
+            P_ax.annotate("Double", (2063, -0.083))
             P_ax.annotate("No change", (2063, -0.023))
-            P_ax.annotate("Reduced", (2063, 0.005))
-            P_ax.annotate("Reduced more", (2063, 0.02))
-            P_ax.annotate("Stop", (2063, 0.034))
+            P_ax.annotate("Reduced", (2063, 0.006))
+            P_ax.annotate("Reduced more", (2063, 0.0215))
+            P_ax.annotate("Stop", (2063, 0.037))
 
 
     #################################################################################################
@@ -296,7 +296,7 @@ if __name__ == "__main__":
             P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure"); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration")
 
         # Initialise loop lists
-        scenarios = [40, 20, 7.5, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
+        scenarios = [40, 20, 10, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
         styles = ['r', 'lime', 'b', 'c', 'm']		# Corresponding plot styles
         Param = np.copy(theta_all)
         coppermax_times = np.array([])
