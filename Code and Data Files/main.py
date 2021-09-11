@@ -112,7 +112,76 @@ if __name__ == "__main__":
 
     #################################################################################################
 
-    # 2.
+    # 2a. 
+    
+    ########## 			Calibrate model to the historical data (all SI units)			   ##########
+    if True:    # Note this condition must be set to True for all of the code following it to work
+        
+        # Initialise estimates of parameter values
+        a = 1 * 10**-6                       
+        b = 6 * 10**-2          
+        p0 = 1000                              
+        p1 = 7 * 10**4                       
+        p_init = 3.5*10**4
+        dC_src = 12500 * 8*10**-6
+        c_init = 0 
+        M0 = 1*10**11
+        rho_sol = 1000 	
+
+        # Obtain historical data on extraction, pressure and copper conc. from files and convert to SI units where necessary
+        # Extraction rate data
+        t_q_data, q_data = np.genfromtxt("ac_q.csv", dtype=float, skip_header=True, delimiter=', ').T
+        q_data *= 10**3 * 365 * rho_sol 	# Convert from 10^6 L/day to kg/year
+        # Pressure data
+        t_p_data, p_data = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ').T
+        p_data *= 10**6						# Convert from MPa to Pa
+        # Copper concentration data
+        t_cu_data, cu_data = np.genfromtxt("ac_cu.csv", dtype=float, skip_header=1, delimiter=', ').T
+        cu_data *= 10**-3 / rho_sol			# Convert from mg/L to mass fraction (unitless)
+
+        # Specify solution domain to use for calibration (ie historical data domain)
+        t0 = 1980          # Year start
+        t1 = 2016          # Year end
+        dt = 0.5           # Timestep       
+
+        all_time_data = np.append(t_p_data, t_cu_data)
+        all_data = np.append(p_data, cu_data)
+
+        # Define function for curve_fit
+        def combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data):
+
+            def combinedFunction(all_times, *Parameters):
+                
+                # Single data reference passed in, extract separate data
+                p_times = all_times[:len(t_p_data)] # first data
+                cu_times = all_times[len(t_p_data):] # second data
+
+                P_parameters, Cu_parameters = get_parameter_set(Parameters, None, "split")
+
+                t_sol, P_sol = solve_ode_pressure(ode_pressure, t0, t1, dt, t_q_data, q_data, P_parameters)
+                result1 = np.interp(p_times, t_sol, P_sol)
+
+                t_sol2, Cu_sol = solve_ode_cu(ode_cu, t0, t1, dt, t_sol, P_sol, Cu_parameters)
+                result2 = np.interp(cu_times, t_sol2, Cu_sol)
+
+                return np.append(result1, result2)
+
+            return combinedFunction
+
+        # Fit model
+        all_mean, all_var = curve_fit(combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data), all_time_data, all_data, [a, b, p0, p1, p_init,dC_src, c_init, M0])
+
+        # Plot calibrated model
+        f, P_ax = plt.subplots(figsize=(14,6))
+        Cu_ax = P_ax.twinx()
+        plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Time (Year)"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+        p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, all_mean, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
+        P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
+
+
+    #################################################################################################
+
+    # 2b.
 
     ########## 			Calibrate model to the historical data (all SI units)			   ##########
     if True:   # Note this condition must be set to True for all of the code following it to work
@@ -130,24 +199,7 @@ if __name__ == "__main__":
         # Store parameter estimates in the respective vectors
         P_parameters = [a, b, p0, p1, p_init]
         Extra_C_parameters = [dC_src, c_init, M0]
-
-
-        # Obtain historical data on extraction, pressure and copper conc. from files and convert to SI units where necessary
-        # Extraction rate data
-        t_q_data, q_data = np.genfromtxt("ac_q.csv", dtype=float, skip_header=True, delimiter=', ').T
-        q_data *= 10**3 * 365 * rho_sol 	# Convert from 10^6 L/day to kg/year
-        # Pressure data
-        t_p_data, p_data = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ').T
-        p_data *= 10**6						# Convert from MPa to Pa
-        # Copper concentration data
-        t_cu_data, cu_data = np.genfromtxt("ac_cu.csv", dtype=float, skip_header=1, delimiter=', ').T
-        cu_data *= 10**-3 / rho_sol			# Convert from mg/L to mass fraction (unitless)
-
-
-        # Specify solution domain to use for calibration (ie historical data domain)
-        t0 = 1980          # Year start
-        t1 = 2016          # Year end
-        dt = 0.5           # Timestep              
+       
         # Calibrate pressure model parameters
         theta_P, cov_P = curve_fit(evaluate_pressure(ode_pressure, t0, t1, dt, t_q_data, q_data), t_p_data, p_data, p0 = P_parameters, bounds=(0,[1,10,10**5,10**7,10**5]))
         # Solve pressure model using this set of calibrated parameters
@@ -211,9 +263,9 @@ if __name__ == "__main__":
             Cu_handles.append(cu)
         
         # Plot the historical data
-        p, cu, _, _ = plot_aquifer_model(t0, t1-predict, dt, P_ax, Cu_ax, t_q_data, q_data, theta_all, True, 1, 1, 'k-', 'k-', "Best fit model", "Best fit model", "mg/L")
-        P_handles.append(p)
-        Cu_handles.append(cu)
+        p, cu, p_hist, cu_hist = plot_aquifer_model(t0, t1-predict, dt, P_ax, Cu_ax, t_q_data, q_data, theta_all, True, 1, 1, 'k-', 'k-', "Best fit model", "Best fit model", "mg/L")
+        P_handles.append(p); P_handles.append(p_hist)
+        Cu_handles.append(cu); Cu_handles.append(cu_hist)
 
         # Add a line for the recommended copper concentration limits
         # A safety factor of 1.5 is applied, to the health limit of 2mg/L (Maximum Allowable Value for Health as stated in the Drinking Water Standards for NZ 2008)
@@ -237,12 +289,12 @@ if __name__ == "__main__":
             Cu_ax.annotate("No change", (2060, 1.28))
             Cu_ax.annotate("Reduced", (2060, 1.18))
             Cu_ax.annotate("Reduced more", (2060, 1.04))
-            Cu_ax.annotate("Stop", (2060, 0.867))
+            Cu_ax.annotate("Stop", (2060, 0.864))
             P_ax.annotate("Double", (2063, -0.083))
             P_ax.annotate("No change", (2063, -0.023))
-            P_ax.annotate("Reduced", (2063, 0.006))
-            P_ax.annotate("Reduced more", (2063, 0.0215))
-            P_ax.annotate("Stop", (2063, 0.037))
+            P_ax.annotate("Reduced", (2063, 0.007))
+            P_ax.annotate("Reduced more", (2063, 0.0213))
+            P_ax.annotate("Stop", (2063, 0.036))
 
 
     #################################################################################################

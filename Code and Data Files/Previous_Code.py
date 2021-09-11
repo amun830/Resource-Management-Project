@@ -47,7 +47,7 @@ theta_C_extra = curve_fit(evaluate_copper(ode_cu, t0, t1, dt, t_sol, P_sol, thet
 # Combine parameters into the calibrated parameter vector, theta_all
 theta_all = get_parameter_set(theta_P, theta_C_extra, "theta_all")
 
-if True:
+if False:
     # Period to model into the future:
     predict = 60 
     t1 += predict
@@ -108,12 +108,13 @@ if True:
 		
 ### CALIBRATION ### 
 # Plot both the calibrated pressure and copper concentration models against the historical data, as a visual check
-f, P_ax = plt.subplots(figsize=(14,6))
-Cu_ax = P_ax.twinx()
-plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Year"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
-p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, theta_all, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
-P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
-plt.show()
+if False:
+    f, P_ax = plt.subplots(figsize=(14,6))
+    Cu_ax = P_ax.twinx()
+    plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Year"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+    p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, theta_all, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
+    P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
+    plt.show()
 
 #################################################################################################
 
@@ -174,7 +175,7 @@ def create_posterior_combined(Parameters_best, N):
 
 ### CALIBRATION ###
 
-if False: 
+if True: 
     all_time_data = np.append(t_p_data, t_cu_data)
     all_data = np.append(p_data, cu_data)
 
@@ -201,10 +202,9 @@ if False:
     all_mean, all_var = curve_fit(combined_fit(t0, t1, dt, t_q_data, q_data, t_p_data, t_cu_data), all_time_data, all_data, [a, b, p0, p1, p_init,dC_src, c_init, M0])
 
 
-    f_P, P_ax = plt.subplots(figsize=(12,8)); f_Cu, Cu_ax = plt.subplots(figsize=(12,8))
-    P_ax.set_xlabel("Time (Year)"); Cu_ax.set_xlabel("Time (Year)")
-    P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
-    P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure"); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration")
-
-    plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, all_mean, True, 1, 1, 'k-', 'k-', "Pressure", "Copper", "mg/L")
+    f, P_ax = plt.subplots(figsize=(14,6))
+    Cu_ax = P_ax.twinx()
+    plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Year"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+    p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, all_mean, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
+    P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
     plt.show()
