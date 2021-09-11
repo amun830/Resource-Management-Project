@@ -127,15 +127,16 @@ def plot_model_misfit(Parameters, t_p_data, p_data, t_cu_data, cu_data):
 
     # Configure plot
     ax[0].plot(t_p_data, P_misfit, 'kx')
-    ax[0].set_title("Pressure Model Misfit")
-    ax[0].set_xlabel("Time (Year)")
-    ax[0].set_ylabel("Pressure Misfit (MPa)")
+    ax[0].set_title("Pressure Model Misfit", fontsize=14)
+    ax[0].set_xlabel("Time (Year)", fontsize=12)
+    ax[0].set_ylabel("Pressure Misfit (MPa)", fontsize=12)
     ax[1].plot(t_cu_data, Cu_misfit, 'rx')
-    ax[1].set_title("Copper Concentration Model Misfit")
-    ax[1].set_xlabel("Time (Year)")
-    ax[1].set_ylabel("Copper Conc. Misfit (mg/L)")
+    ax[1].set_title("Copper Concentration Model Misfit", fontsize=14)
+    ax[1].set_xlabel("Time (Year)", fontsize=12)
+    ax[1].set_ylabel("Copper Conc. Misfit (mg/L)", fontsize=12)
     ax[0].axhline(y=0, color= 'grey', linestyle='--')
     ax[1].axhline(y=0, color= 'grey', linestyle='--')
+    plt.tight_layout(pad=2, h_pad=3, w_pad=5, rect=None)
 
     return f, ax
 

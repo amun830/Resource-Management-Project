@@ -41,9 +41,9 @@ if __name__ == "__main__":
         f,(host, host2, host3) = plt.subplots(3,2)
         num, = host[0].plot(P_times, P_numerical, 'bx')
         ana, = host[0].plot(P_times, P_analytical, 'r-')
-        host[0].set_title('Benchmark Plot for Pressure ODE Solver [Simple Parameters]')
-        host[0].set_xlabel('Time, t (Year)')
-        host[0].set_ylabel('Pressure, P (Pa)')
+        host[0].set_title('Benchmark Plot for Pressure ODE Solver [Simple Parameters]', fontsize=14)
+        host[0].set_xlabel('Time, t (Year)', fontsize=12)
+        host[0].set_ylabel('Pressure, P (Pa)', fontsize=12)
         host[0].legend([num, ana],['Numerical Solution', 'Analytical Solution'])
         
         # 2. *** Benchmarking for solve_ode_cu ***
@@ -60,9 +60,9 @@ if __name__ == "__main__":
         # Plot the solutions
         num, = host[1].plot(C_times, C_numerical, 'bx')
         ana, = host[1].plot(C_times, C_analytical, 'r-')
-        host[1].set_title('Benchmark Plot for Copper ODE Solver [Simple Parameters]')
-        host[1].set_xlabel('Time, t (Year)')
-        host[1].set_ylabel('Copper Conc., C (mg/L)')
+        host[1].set_title('Benchmark Plot for Copper ODE Solver [Simple Parameters]', fontsize=14)
+        host[1].set_xlabel('Time, t (Year)', fontsize=12)
+        host[1].set_ylabel('Copper Conc., C (mg/L)', fontsize=12)
         host[1].legend([num, ana],['Numerical Solution', 'Analytical Solution'])
 
         # *** 3. Error analysis plots ***
@@ -71,9 +71,9 @@ if __name__ == "__main__":
         C_error = 100*(C_numerical - C_analytical)/C_analytical
         # Plot the errors
         host2[0].plot(P_times, P_error, 'k'); host2[1].plot(C_times, C_error, 'k'); 
-        host2[0].set_title('Error Analysis of Pressure Solution'); host2[1].set_title('Error Analysis of Copper Conc. Solution')
-        host2[0].set_xlabel('Time, t (Year)'); host2[1].set_xlabel('Time, t (Year)')
-        host2[0].set_ylabel('% Error (against benchmark)'); host2[1].set_ylabel('% Error (against benchmark)')
+        host2[0].set_title('Error Analysis of Pressure Solution', fontsize=14); host2[1].set_title('Error Analysis of Copper Conc. Solution', fontsize=14)
+        host2[0].set_xlabel('Time, t (Year)', fontsize=12); host2[1].set_xlabel('Time, t (Year)', fontsize=12)
+        host2[0].set_ylabel('% Error (against benchmark)', fontsize=12); host2[1].set_ylabel('% Error (against benchmark)', fontsize=12)
         
         # *** 4. Timestep convergence plots ***
         # Compute the numerical solution at t = t1 using different time steps dt, for both ODE solver functions
@@ -101,12 +101,12 @@ if __name__ == "__main__":
             C_sol[i] = solve_ode_cu(ode_cu, t0, t1, dt, t_sol_sim, P_sol_sim, C_parms)[1][-1]
         # Plot the solutions
         host3[0].plot(P_dt_recip, P_sol, 'k.'); host3[1].plot(C_dt_recip, C_sol, 'k.')
-        host3[0].set_title('Timestep Convergence of Pressure Solution'); host3[1].set_title('Timestep Convergence of Copper Conc. Solution')
-        host3[0].set_xlabel('Reciprocal of timestep, 1/dt (1/Year)'); host3[1].set_xlabel('Reciprocal of timestep, 1/dt (1/Year)')
-        host3[0].set_ylabel('P(t = 25)'); host3[1].set_ylabel('C(t = 10)')
+        host3[0].set_title('Timestep Convergence of Pressure Solution', fontsize=14); host3[1].set_title('Timestep Convergence of Copper Conc. Solution', fontsize=14)
+        host3[0].set_xlabel('Reciprocal of timestep, 1/dt (1/Year)', fontsize=12); host3[1].set_xlabel('Reciprocal of timestep, 1/dt (1/Year)', fontsize=12)
+        host3[0].set_ylabel('P(t = 25)', fontsize=12); host3[1].set_ylabel('C(t = 10)', fontsize=12)
         # Configure timestep convergence plot
         f.set_size_inches(15,9)
-        plt.tight_layout(pad=1.5, h_pad=2.5, w_pad=2.5, rect=None)
+        plt.tight_layout(pad=1.5, h_pad=2.5, w_pad=3, rect=None)
         plt.savefig("Benchmarking_Plots.png")
 
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
         # Specify solution domain to use for calibration (ie historical data domain)
         t0 = 1980          # Year start
-        t1 = 2016          # Year end
+        t1 = 2018          # Year end
         dt = 0.5           # Timestep       
 
         all_time_data = np.append(t_p_data, t_cu_data)
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         # Plot calibrated model
         f, P_ax = plt.subplots(figsize=(14,6))
         Cu_ax = P_ax.twinx()
-        plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Time (Year)"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+        plt.title("Calibrated Model Against Historical Data", fontsize=14); P_ax.set_xlabel("Time (Year)", fontsize=12); P_ax.set_ylabel("Aquifer Pressure (MPa)", fontsize=12); Cu_ax.set_ylabel("Copper Concentration (mg/L)", fontsize=12)
         p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, all_mean, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
         P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
         print("First calibration best-fit parameters: {}".format(all_mean))
@@ -220,7 +220,7 @@ if __name__ == "__main__":
         # Plot both the calibrated pressure and copper concentration models against the historical data, as a visual check
         f, P_ax = plt.subplots(figsize=(14,6))
         Cu_ax = P_ax.twinx()
-        plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Time (Year)"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+        plt.title("Calibrated Model Against Historical Data", fontsize=14); P_ax.set_xlabel("Time (Year)", fontsize=12); P_ax.set_ylabel("Aquifer Pressure (MPa)", fontsize=12); Cu_ax.set_ylabel("Copper Concentration (mg/L)", fontsize=12)
         p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, theta_all, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
         P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
         print("Second calibration best-fit parameters: {}".format(theta_all))
@@ -245,14 +245,14 @@ if __name__ == "__main__":
         if combined == True:
             f, P_ax = plt.subplots(figsize=(14,8))
             Cu_ax = P_ax.twinx()		
-            plt.title("Model Solution for Pressure and Copper Concentration of the Onehunga Aquifer")
-            P_ax.set_xlabel("Time (Year)")
-            P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+            plt.title("Model Solution for Pressure and Copper Concentration of the Onehunga Aquifer", fontsize=14)
+            P_ax.set_xlabel("Time (Year)", fontsize=12)
+            P_ax.set_ylabel("Aquifer Pressure (MPa)", fontsize=12); Cu_ax.set_ylabel("Copper Concentration (mg/L)", fontsize=12)
         else:
             f_P, P_ax = plt.subplots(figsize=(12,8)); f_Cu, Cu_ax = plt.subplots(figsize=(12,8))
-            P_ax.set_xlabel("Time (Year)"); Cu_ax.set_xlabel("Time (Year)")
-            P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
-            P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure"); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration")
+            P_ax.set_xlabel("Time (Year)", fontsize=12); Cu_ax.set_xlabel("Time (Year)", fontsize=12)
+            P_ax.set_ylabel("Aquifer Pressure (MPa)", fontsize=12); Cu_ax.set_ylabel("Copper Concentration (mg/L)", fontsize=12)
+            P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure", fontsize=14); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration", fontsize=14)
 
         # Initialise loop lists
         scenarios = [40, 20, 10, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
@@ -279,11 +279,11 @@ if __name__ == "__main__":
         # A safety factor of 1.5 is applied, to the health limit of 2mg/L (Maximum Allowable Value for Health as stated in the Drinking Water Standards for NZ 2008)
         h_limit = 2/1.5
         Cu_ax.hlines(y=h_limit, xmin=t0, xmax=t1, color='slategrey', linestyle='--')
-        Cu_ax.annotate("Health Limit (with 1.5 Safety Factor)", (1980, 1.35), color="slategrey", size="9")
+        Cu_ax.annotate("Health Limit (with 1.5 Safety Factor)", (1980, 1.35), color="slategrey", size="10")
         # The aesthetic guideline of 1mg/L (as stated in the Drinking Water Standards for NZ 2008)
         a_limit = 1
         Cu_ax.hlines(y=a_limit, xmin=t0, xmax=t1, color='slategrey', linestyle='--')
-        Cu_ax.annotate("Guideline Aesthetic Determinand", (1980, 1.02), color="slategrey", size="9")
+        Cu_ax.annotate("Guideline Aesthetic Determinand", (1980, 1.02), color="slategrey", size="10")
 
         # Add legend based on whether the data is combined into one plot (or not)
         if combined == True:
@@ -340,20 +340,20 @@ if __name__ == "__main__":
         
         # Period to model into the future:
         predict2 = 60
-        t1 = 2016 + predict2
+        t1 = 2018 + predict2
         # Initialise and configure plots: set the following to True to have separate plots
         combined = False
         if combined == True:
             f, P_ax = plt.subplots(figsize=(14,8))
             Cu_ax = P_ax.twinx()		
-            plt.title("Model Solution for Pressure and Copper Concentration of the Onehunga Aquifer")
-            P_ax.set_xlabel("Time (Year)")
-            P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
+            plt.title("Model Solution for Pressure and Copper Concentration of the Onehunga Aquifer", fontsize=14)
+            P_ax.set_xlabel("Time (Year)", fontsize=12)
+            P_ax.set_ylabel("Aquifer Pressure (MPa)", fontsize=12); Cu_ax.set_ylabel("Copper Concentration (mg/L)", fontsize=12)
         else:
             f_P, P_ax = plt.subplots(figsize=(12,8)); f_Cu, Cu_ax = plt.subplots(figsize=(12,8))
-            P_ax.set_xlabel("Time (Year)"); Cu_ax.set_xlabel("Time (Year)")
-            P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
-            P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure"); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration")
+            P_ax.set_xlabel("Time (Year)", fontsize=12); Cu_ax.set_xlabel("Time (Year)", fontsize=12)
+            P_ax.set_ylabel("Aquifer Pressure (MPa)", fontsize=12); Cu_ax.set_ylabel("Copper Concentration (mg/L)", fontsize=12)
+            P_ax.set_title("Scenario Modelling for the Onehunga Aquifer Pressure [with Uncertainty]", fontsize=14); Cu_ax.set_title("Scenario Modelling for the Onehunga Aquifer Copper Concentration [with Uncertainty]", fontsize=14)
 
         # Initialise loop lists
         scenarios = [40, 20, 10, 5, 0] 			# Different extraction scenarios to model, in 10^6 L/day
@@ -410,11 +410,11 @@ if __name__ == "__main__":
         # A safety factor of 1.5 is applied, to the health limit of 2mg/L (Maximum Allowable Value for Health as stated in the Drinking Water Standards for NZ 2008)
         h_limit = 2/1.5
         Cu_ax.hlines(y=h_limit, xmin=t0, xmax=t1, color='slategrey', linestyle='--')
-        Cu_ax.annotate("Health Limit (with 1.5 Safety Factor)", (1980, 1.35), color="slategrey", size="9")
+        Cu_ax.annotate("Health Limit (with 1.5 Safety Factor)", (1980, 1.35), color="slategrey", size="10")
         # The aesthetic guideline of 1mg/L (as stated in the Drinking Water Standards for NZ 2008)
         a_limit = 1
         Cu_ax.hlines(y=a_limit, xmin=t0, xmax=t1, color='slategrey', linestyle='--')
-        Cu_ax.annotate("Guideline Aesthetic Determinand", (1980, 1.02), color="slategrey", size="9")
+        Cu_ax.annotate("Guideline Aesthetic Determinand", (1980, 1.02), color="slategrey", size="10")
 
         # Plot historical data
         P_ax.errorbar(t_p_data,10**-6 * p_data,yerr=6*10**-3,fmt='ro', label=' Historical data', zorder= 1000)
