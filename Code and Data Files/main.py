@@ -223,6 +223,10 @@ if __name__ == "__main__":
         plt.title("Calibrated Model Against Historical Data"); P_ax.set_xlabel("Time (Year)"); P_ax.set_ylabel("Aquifer Pressure (MPa)"); Cu_ax.set_ylabel("Copper Concentration (mg/L)")
         p,cu, p_hist, cu_hist = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data, q_data, theta_all, historical=True, P=1, Cu=1, P_style="k", Cu_style="r", P_name = "Pressure (Model)", Cu_name = "Copper Conc. (Model)", Cu_unit = "mg/L")
         P_ax.legend(handles=[p, cu, p_hist, cu_hist], loc = 4)
+        print("Second calibration best-fit parameters: {}".format(theta_all))
+
+        # Plot misfit
+        f_mis, ax_mis = plot_model_misfit(theta_all, t_p_data, 10**-6 * p_data, t_cu_data, 10**6 * cu_data)
 
     #################################################################################################
 
