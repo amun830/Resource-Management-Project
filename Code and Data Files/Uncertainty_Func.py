@@ -38,8 +38,8 @@ def create_posterior(Parameters_best, N, quantity):
             Vector of first parameter values.
         par2 :  array-like
             Vector of second parameter values.
-        Posterior : ???
-            ????
+        Posterior : np.array[][]
+            Posterior matrix of vallues.
     
     '''
 
@@ -114,7 +114,7 @@ def plot_posterior2D(par1, par2, name1, name2, title, P):
             Y label.
         title : string
             Plot title.
-        P : ???
+        P : np.array[][]
             Posterior matrix.
        
         Returns:

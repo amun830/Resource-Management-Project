@@ -16,7 +16,8 @@ ENGSCI263 - Group 11
     -   Continue operating at current rate (20ML/day).
     -   Double extraction rate (40 ML/day).
 
--   We then conduct uncertanty analysis by computing parameter posterior distribution of pressure and copper models (normal). 
+-   We then conduct uncertanty analysis by computing parameter posterior distribution of pressure and copper models (normal) 
+    according to given data proir distribution. 
 
 -   This is used to fit to data and hence create samples for each senario. Then plot.
 
@@ -55,7 +56,8 @@ ENGSCI263 - Group 11
     4. evaluate_pressure(), pressure solution helper function for use in scipy.optimize.curve_fit.
 
 -   test_solver.py
-    1. .... ???? to be completed
+    1. Asserts our pressure ODE solvers are working correctly (4 tests)
+    2. Asserts our copper concentration solvers are working correctly (5 tests).
 
 -   Model_Use_Func.py
     1. plot_aquifer_model(), Solution Plotter Function.
