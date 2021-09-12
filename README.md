@@ -1,8 +1,8 @@
-# Resource-Management-Project
+# Resource-Management-Project   
 
-10/09/2021
-#################### Resource Consent Project [Contamination in the Onehunga Aquifer] ####################
-ENGSCI263 - Group 11
+10/09/2021  
+####################    Resource Consent Project [Contamination in the Onehunga Aquifer]    ####################  
+ENGSCI263 - Group 11    
 -   These functions and scripts are used to aid our investigation into the effect of extraction from the Onehunga Aquifer 
     on the pressure and copper concentration, and hence help us make an educated recommendation to the Auckland Regional 
     Council regarding the outcome of Watercare’s consent application.
@@ -36,15 +36,15 @@ ENGSCI263 - Group 11
 
 ##### Data File Summary #####
 -   ac_cu.csv, historic concentration measurements of copper in the aquifer (1985-2015, 5 year intervals, [mg/L]).
--   ac_p.csv, historic pressure measurements of pressure in the aquifer (1985-2016, by-annual intervals, [MPa]).
+-   ac_p.csv, historic pressure measurements of pressure in the aquifer (1985-2016, biannual intervals, [MPa]).
 -   ac_q.csv, historic extraction rates of aquifer operation (1985-2018, annual intervals, [10^6 L/day]).
 
 ##### Code File Summary (Python) #####
 -   main.py
     1. Creates benchmarking plots.
-    2. Calibrates model (must be completed for following sections)
-        a. First calibration method 
-        b. Second (improved) calibration method. 
+    2. Calibrates model (must be completed for following sections)  
+        a. First calibration method     
+        b. Second (improved) calibration method.    
     3. Generates forecast plots of future senario.
     4. Conducts uncertainty analysis (generates parameter sets)
     5. Generates plots of future senario predictions, with uncertancy.
@@ -72,11 +72,11 @@ ENGSCI263 - Group 11
     3. plot_aquifer_forecast_uncertainty(), Plots forcasted LPM with uncertainty.
 
 -   Helper_Func.py
-    1. Defines get_parameter_set(), which combines and arranges parameters into correct arangement.
-        1.1    type == "theta_all", returns list of all calibrated model parameters
-        1.2    type == "cu_all", returns list of all copper model parameters.
-        1.3    type == "split", splits list and return lists of each model parameters
-        1.4    type == "get_all", returns all parameters in list.
+    1. Defines get_parameter_set(), which combines and arranges parameters into correct arangement.      
+        1.1    type == "theta_all", returns list of all calibrated model parameters        
+        1.2    type == "cu_all", returns list of all copper model parameters.        
+        1.3    type == "split", splits list and return lists of each model parameters        
+        1.4    type == "get_all", returns all parameters in list.        
 
 -   Uncertainty_Func.py
     1. create_posterior(), generates posterior distribution of LPM by calibrating off historic data.
@@ -84,10 +84,10 @@ ENGSCI263 - Group 11
     3. fit_mvn(), calculates optimum parameters of a multivariate normal distribution.
     4. construct_samples(), constructs samples from a multivariate normal distribution fitted to the data.
     5. plot_samples(), plots the samples generated from 4.
-    6. model_ensemble(), solves the model for given parameter samples and plots using 5.
+    6. model_ensemble(), solves the model for given parameter samples and plots using 5.    
 
--   PREVIOUS CODE FILES
-    Lab1Plot.py
-        - Generates plot of historical data [in 'Given?' part of report]
-    Model.py
-    Previous_Code.py
+-   PREVIOUS CODE FILES      
+    1. Lab1Plot.py     
+        - Generates plot of historical data (in 'Given?' part of report)  
+    2. Model.py    
+    3. Previous_Code.py    
