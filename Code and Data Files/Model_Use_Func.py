@@ -17,7 +17,7 @@ from Helper_Func import *
 # Solution Plotter Function (adds solution to the input axes, under the scenario inputted)
 def plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, Parameters, historical, P, Cu, P_style, Cu_style, P_name, Cu_name, Cu_unit):
     ''' 
-        Plot the kettle LPM over top of the data.
+        Solve and plot the LPM solution, given time domain, extraction data and parameters.
 
         Parameters:
         -----------
@@ -28,9 +28,9 @@ def plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, Parameters, his
         dt :    float
             Time step length (in years)
         P_ax :  plt.plot()
-            Exisisting pressure plot.
+            Existing pressure plot.
         Cu_ax : plt.plot()
-            Exisisting Cu concentration plot.
+            Existing Cu concentration plot.
         t_extraction :  array-like
             List of time points of given extraction data (q) 
         q : array-like
@@ -38,15 +38,15 @@ def plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, Parameters, his
         Parameters :    array-like
             List of LPM parameters.
         historical :    boolean
-            True if we want to plot hystorical data.
+            True if we want to plot historical data.
         P :     int
             1 if we want to plot/return Pressure, 0 if else.
         Cu :     int
             1 if we want to plot/return Cu concentration, 0 if else.
         P_style :   string
-            denoter of pressure plot line / fill style.
+            Denoter of pressure plot line / fill style.
         Cu_style :   string
-            denoter of Cu concentration plot line / fill style.
+            Denoter of Cu concentration plot line / fill style.
         P_name : string
             Label of Pressure plot line.
         Cu_name : string
@@ -63,7 +63,11 @@ def plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, Parameters, his
         p_hist : plt.plot()
             Plot of historical pressure data.
         cu_hist : plt.plot()
-            Plot of histprical Cu concentration.
+            Plot of historical Cu concentration.
+
+        Notes:
+        --------
+        Cu_unit is either "mg/L" or else
     '''
 
     # Obtain the pressure and copper model parameters
@@ -115,8 +119,31 @@ def plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, Parameters, his
 #2.
 
 def plot_model_misfit(Parameters, t_p_data, p_data, t_cu_data, cu_data):
+    '''
+        Solve and plot misfit of the LPM solution against historical data
 
-    # Solve model at times
+        Parameters:
+        -----------
+        Parameters :    array-like
+            List of LPM parameters.
+        t_p_data : array-like
+            List of times corresponding to pressure data (p_data)
+        p_data : array-like
+            List of pressure historical data
+        t_cu_data : array-like
+            List of times corresponding to copper conc. data (cu_data)
+        cu_data : array-like
+            List of copper conc. historical data
+
+        Returns:
+        --------
+        f : plt.figure()
+            Figure of plot of misfits
+        ax : plt.axes()
+            Axes of plot of misfits
+    '''
+
+    # Solve model at same as data times
     f, ax = plt.subplots(nrows=1,ncols=2,figsize=(14,5))
     P_model, _ = solve_lpm(t_p_data, Parameters)
     _, Cu_model = solve_lpm(t_cu_data, Parameters)
@@ -148,6 +175,8 @@ def plot_model_misfit(Parameters, t_p_data, p_data, t_cu_data, cu_data):
 # Lumped Parameter Model Solver Function (solves the LPM in the data time domain, and evaluates at certain times, given the parameters)
 def solve_lpm(t, Parameters):
     '''
+        Solves the LMP and evaluates the solution at the input times
+
         Parameters:
         ------------
         t : array-like
@@ -202,9 +231,9 @@ def plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, 
         dt :    float
             Time step length (in years)
         P_ax :  plt.plot()
-            Exisisting pressure plot.
+            Existing pressure plot.
         Cu_ax : plt.plot()
-            Exisisting Cu concentration plot.
+            Existing Cu concentration plot.
         t_extraction :  array-like
             List of time points of given extraction data (q) 
         q : array-like
@@ -218,6 +247,14 @@ def plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, 
         style :   string
             Denoter of plot line / fill style
 
+        Returns:
+        ------------
+        P_sol : array-like
+            Pressure solution of LPM plotted.
+        t_cu_sol: array-like
+            Times corresponding to Cu conc. solution of LPM plotted (Cu_sol)
+        Cu_sol : array-like
+            Cu conc. solution of LPM plotted.
     '''
 
     # Obtain the pressure and copper model parameters
@@ -231,6 +268,7 @@ def plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, 
     # Adjust copper concentration units
     Cu_sol *= 10**6
     
+    # Plot pressure and/or Cu conc. solutions based on inputs
     if P==1:
         fut = np.where(t_p_sol>2018)[0][0]
         P_ax.plot(t_p_sol[:fut], P_sol[:fut], 'k', lw=0.3, alpha=0.2)
@@ -241,4 +279,5 @@ def plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_extraction, q, 
         Cu_ax.plot(t_cu_sol[:fut], Cu_sol[:fut], 'k', lw=0.3, alpha=0.2)
         Cu_ax.plot(t_cu_sol[fut-1:], Cu_sol[fut-1:], style, lw=0.3, alpha=0.2)
 
+    # Return parts of solution
     return P_sol, t_cu_sol, Cu_sol

@@ -1,10 +1,10 @@
 ######################################### Uncertainty_Func.py #########################################
-    #1. create_posterior(), generates posterior distribution of LPM by calibrating off hystoric data.
-    #2. plot_posterior2D(), plots posterior solution solved in 1.
-    #3. fit_mvn(), calculates optimum parameters of a multivariate normal distribution.
+    #1. create_posterior(), generates posterior distribution of LPM by calibrating to historic data.
+    #2. plot_posterior2D(), plots posterior distribution obtained in 1.
+    #3. fit_mvn(), calculates best-fit parameters of a multivariate normal distribution.
     #4. construct_samples(), Constructs samples from a multivariate normal distribution fitted to the data.
-    #5. plot_samples(), Plots ...
-    #6. model_ensemble(), Runs the model for given parameter samples and plots using 5.
+    #5. plot_samples(), Plots the parameter samples generated in 4. 
+    #6. model_ensemble(), Runs the model for given sets of parameter samples and plots them. 
 
 
 # Import libraries
@@ -147,16 +147,18 @@ def plot_posterior2D(par1, par2, name1, name2, title, P):
 #3.
 
 def fit_mvn(parspace, dist):
-    """Finds the parameters of a multivariate normal distribution that best fits the data
+    """
+        Finds the parameters of a multivariate normal distribution that best fits the data
 
-    Parameters:
-    -----------
+        Parameters:
+        -----------
         parspace : array-like
             list of meshgrid arrays spanning parameter space
         dist : array-like 
             PDF over parameter space
-    Returns:
-    --------
+
+        Returns:
+        --------
         mean : array-like
             distribution mean
         cov : array-like
@@ -212,7 +214,7 @@ def construct_samples(par1,par2, Parameters, P,N_samples, quantity, plot):
         quantity :  string
             Identifier ("copper" or "pressure")
         plot : boolean
-            If true plot the samples
+            If True, plot the samples
 
 	Returns:
 	--------
@@ -225,10 +227,10 @@ def construct_samples(par1,par2, Parameters, P,N_samples, quantity, plot):
 	A, B = np.meshgrid(par1,par2,indexing='ij')
 	mean, covariance = fit_mvn([A,B], P)
 
-	# 1. create samples using numpy function multivariate_normal (Google it)
-	#samples=
+    #create samples using numpy function multivariate_normal
 	samples = np.random.multivariate_normal(mean, covariance, N_samples, tol=1e-5) 
 	
+    # Plot the samples if desired
 	if plot == True:
 		plot_samples(par1, par2, Parameters, P, samples, quantity) 
 	
@@ -241,7 +243,7 @@ def construct_samples(par1,par2, Parameters, P,N_samples, quantity, plot):
 
 def plot_samples(par1, par2, Parameters, P, samples, quantity):
     ''' 
-    This function plots multivariate normal samples.
+    This function plots the multivariate normal samples over the posterior distirbution. 
 
 	Parameters:
     -----------
@@ -278,10 +280,11 @@ def plot_samples(par1, par2, Parameters, P, samples, quantity):
         Mid_Pars = Parameters[6]
         s = np.array([np.sum((solve_lpm(tc,[*Before_Pars, par1, Mid_Pars, par2])[1]-co)**2)/v for par1,par2 in samples])
 
-
+    # Generate posterior
     p = np.exp(-s/2.)
     p = p/np.max(p)*np.max(P)*1.2
 
+    # Plot
     ax1.plot(*samples.T,p,'k.')
 
     # plotting upkeep
@@ -294,7 +297,7 @@ def plot_samples(par1, par2, Parameters, P, samples, quantity):
     ax1.set_zlim(0., )
     ax1.set_zlabel('P', fontsize=12, color='r')
     
-    # save and show
+    # Show plot
     plt.show()
 
 
@@ -302,7 +305,7 @@ def plot_samples(par1, par2, Parameters, P, samples, quantity):
 
 #6.
 
-def model_ensemble(samples, Parameters,quantity):
+def model_ensemble(samples, Parameters, quantity):
     ''' 
     Runs the model for given parameter samples and plots the results.
 
@@ -316,19 +319,20 @@ def model_ensemble(samples, Parameters,quantity):
             Identifier ("copper" or "pressure")
     '''
 
+    # Initialise time and plot
     t = np.linspace(1980, 2018, 50)
-
     f,axis = plt.subplots(1,1)
 
-
+    # Extract relevant data
     if quantity == "pressure":
         t_data, data = np.genfromtxt("ac_p.csv", dtype=float, skip_header=1, delimiter=', ').T
     elif quantity == "copper":
         t_data, data = np.genfromtxt("ac_cu.csv", dtype=float, skip_header=1, delimiter=', ').T
 
-
+    # Loop through samples
     for par1, par2 in samples:
-
+        
+        # Solve the relevant part of the LPM and plot it
         if quantity == "pressure":
             Parameters[0:2] = par1, par2
             pm = solve_lpm(t, Parameters)[0]
@@ -339,10 +343,10 @@ def model_ensemble(samples, Parameters,quantity):
             cum = solve_lpm(t, Parameters)[1]
             axis.plot(t,cum,'k-',lw=0.25,alpha=0.4)
 
-
+    # Label plot
     axis.plot([],[],'k-',lw=0.5,alpha=0.4,label="Model Ensemble")
 
-
+    # Add error bars as appropriate
     if quantity == "pressure":
         v = 4*10**-5
         axis.errorbar(t_data,data,yerr=v,fmt='ro', label=' Pressure data')
@@ -352,6 +356,7 @@ def model_ensemble(samples, Parameters,quantity):
         axis.errorbar(t_data,data,yerr=v,fmt='ro', label='Copper conc. data')
         axis.set_ylabel('Copper Concentration (mg/L)')
     
+    # Configure and show plot
     axis.set_xlabel('Time (Year)')
     axis.legend()
     plt.show()

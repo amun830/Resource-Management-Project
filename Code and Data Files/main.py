@@ -1,11 +1,11 @@
 ########## main.py ##########
     # 1. Creates benchmarking plots.
     # 2. Calibrates model (must be completed for following sections)
-    # 3. Generates plots of future senario predictions.
+    # 3. Generates plots of future senario forecasts.
     # 4. Conducts uncertancy analysis.
-    # 5. Generates plots of future senario predictions with uncertancy.
+    # 5. Generates plots of future senario forecasts, with uncertancy.
 
-    # Note - Toggle if statements to 'True' to run desired sections.
+    # Note - Toggle 'if' statements to 'True' to run desired sections.
 
 
 # Import libraries and functions
@@ -158,9 +158,11 @@ if __name__ == "__main__":
 
                 P_parameters, Cu_parameters = get_parameter_set(Parameters, None, "split")
 
+                # Solve for pressure
                 t_sol, P_sol = solve_ode_pressure(ode_pressure, t0, t1, dt, t_q_data, q_data, P_parameters)
                 result1 = np.interp(p_times, t_sol, P_sol)
 
+                # Solve for copper conc.
                 t_sol2, Cu_sol = solve_ode_cu(ode_cu, t0, t1, dt, t_sol, P_sol, Cu_parameters)
                 result2 = np.interp(cu_times, t_sol2, Cu_sol)
 
@@ -261,11 +263,14 @@ if __name__ == "__main__":
 
         # Plot the different scenarios
         for i in range(len(scenarios)):
+            # Get extraction scenario and plot style for it
             outcome = scenarios[i]
             style = styles[i]
+            # Set the appropriate future extraction for this scenario
             t_q_data_future = np.concatenate([t_q_data, [t_q_data[-1]+0.00001, t_q_data[-1]+predict]])
             q_data_future = np.concatenate([q_data, 2*[outcome * 10**3 * 365 * rho_sol]])
             name = "{} ML/day".format(outcome)
+            # Plot the forecast and add to legend
             p, cu, _ , _ = plot_aquifer_model(t0, t1, dt, P_ax, Cu_ax, t_q_data_future, q_data_future, theta_all, False, 1, 1, style, style, name, name, "mg/L")
             P_handles.append(p)
             Cu_handles.append(cu)
@@ -365,20 +370,25 @@ if __name__ == "__main__":
 
         # Plot the different scenarios
         for i in range(len(scenarios)):
+            # Get extraction scenario and plot style for it
             outcome = scenarios[i]
             style = styles[i]
+            # Set the appropriate future extraction for this scenario
             t_q_data_future = np.concatenate([t_q_data, [t_q_data[-1]+0.00001, t_q_data[-1]+predict2]])
             q_data_future = np.concatenate([q_data, 2*[outcome * 10**3 * 365 * rho_sol]])
             name = "{} ML/day".format(outcome)
             
+            # Initialise confidence interval for the final pressure and copper conc., under this snecario
             case_interval_pressure = np.array([])
             case_interval_copper = np.array([])
 
-            for j in range(len(ab_samples)):
+            for j in range(len(ab_samples)):    # Loop through samples
+                # Set [a,b] and solve for + plot pressure
                 Param[5] = dCM0_samples[j][0]
                 Param[7] = dCM0_samples[j][1]
                 P_sol, _, _ = plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_q_data_future, q_data_future, Param, 0, 1, style)
                 
+                # Set [dC_src, M0] and solve for + plot copper conc.
                 Param[0:2] = ab_samples[j]
                 _, t_cu_sol, Cu_sol = plot_aquifer_forecast_uncertainty(t0, t1, dt, P_ax, Cu_ax, t_q_data_future, q_data_future, Param, 1, 0, style)
 
@@ -389,6 +399,7 @@ if __name__ == "__main__":
                     coppermax_times = np.append(coppermax_times, t_cu_sol[index])
                     pressure_steady = np.append(pressure_steady,P_sol[-1])
                 
+                # Store final values in arrays
                 case_interval_pressure = np.append(case_interval_pressure, P_sol[-1])
                 case_interval_copper = np.append(case_interval_copper, Cu_sol[-1])
 

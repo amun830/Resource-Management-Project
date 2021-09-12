@@ -2,6 +2,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+### This code generates the plot showing historical data (in the 'Given' section of our reports) ###
+
 # Read data from files
 Year1, Cu = np.genfromtxt('ac_cu.csv', delimiter=',', skip_header = 1).T
 Year2, Pressure = np.genfromtxt('ac_p.csv', delimiter=',', skip_header = 1).T
@@ -25,5 +27,5 @@ p3, = ax2.plot(Year3, Extraction, 'g-', label='Extraction')
 host.legend(handles=[p1,p2,p3], loc='best')
 
 # Show/save plot
-# plt.show()
 plt.savefig('Lab1Plot.png')
+plt.show()

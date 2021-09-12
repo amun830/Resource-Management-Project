@@ -1,5 +1,5 @@
 ########################################### Helper_Func.py ###########################################
-    #1. Defines get_parameter_set(), which combines and arranges parameters into correct arangement.
+    #1. Defines get_parameter_set(), which combines and arranges parameters into a convenient form.
         #1.1    type == "theta_all", returns list of all calibrated model parameters
         #1.2    type == "cu_all", returns list of all copper model parameters.
         #1.3    type == "split", splits list and return lists of each model parameters
@@ -18,7 +18,7 @@ import numpy as np
 # Parameter Set Function (to return a required ordered set of parameters)
 def get_parameter_set(list1, list2, type):
     '''
-     Return the derivative dC/dt at time, t, for given parameters.
+        Returns a desired combination of parameters.
 
         Parameters:
         -----------
